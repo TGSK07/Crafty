@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — Crafty{% endblock %}
+{% block content %}
+  <h2>Create an account</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div>{{ form.username.label_tag }} {{ form.username }}</div>
+    <div>{{ form.first_name.label_tag }} {{ form.first_name }}</div>
+    <div>{{ form.last_name.label_tag }} {{ form.last_name }}</div>
+    <div>{{ form.email.label_tag }} {{ form.email }}</div>
+    <div>{{ form.user_type.label_tag }} {{ form.user_type }}</div>
+    <div>{{ form.password1.label_tag }} {{ form.password1 }}</div>
+    <div>{{ form.password2.label_tag }} {{ form.password2 }}</div>
+    <button type="submit">Sign up</button>
+  </form>
+  <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+{% endblock %}

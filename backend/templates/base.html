@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Crafty{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <script defer src="{% static 'js/theme.js' %}"></script>
+</head>
+<body data-theme="light">
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="{% url 'home' %}">Crafty</a>
+      <div class="nav-right">
+        {% if user.is_authenticated %}
+          <a href="{% url 'profile' %}" class="profile-link">
+            {% if user.profile.image.url|default_if_none:'' %}
+              <img src="{{ user.profile.image.url }}" alt="avatar" class="avatar">
+            {% else %}
+              <div class="avatar-initials">{{ user.initials }}</div>
+            {% endif %}
+          </a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn" type="submit">Logout</button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}">Login</a>
+          <a href="{% url 'signup' %}">Sign up</a>
+        {% endif %}
+        <button id="theme-toggle" class="theme-toggle">🌙</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <small>© {{ now.year }} Crafty</small>
+  </footer>
+</body>
+</html>
