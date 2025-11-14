@@ -1,20 +1,72 @@
-# .gitignore
+# =========================
+# GENERAL
+# =========================
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.swp
+*.swo
+*.bak
+*.log
 .env
 .env.local
-node_modules/
+.env.*.backup
+*.sqlite3
+*.db
+
+# Secret keys & local config
+backend/.env
+backend/.env.local
+frontend/.env
+frontend/.env.local
+
+# =========================
+# PYTHON / DJANGO
+# =========================
+*.egg-info/
+*.egg
 dist/
 build/
-*.sqlite3
-*.egg-info
-.DS_Store
+pip-wheel-metadata/
+.python-version
+.coverage
+coverage/
+htmlcov/
+venv/
+ENV/
+env/
+.venv/
+backend/.venv/
+backend/venv/
+backend/env/
+
+# Django specific
+staticfiles/
+media/
+backend/static/
+backend/media/
+
+
+# =========================
+# IDE / EDITORS
+# =========================
 .vscode/
 .idea/
-.envrc
-*.log
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# =========================
+# DOCKER
+# =========================
+**/.dockerignore
+docker-compose.override.yml
+*.pid
+
+# =========================
+# MISC
+# =========================
+.DS_Store
+Thumbs.db
 *.pem
-.env.example
-coverage/
