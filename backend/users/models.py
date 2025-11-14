@@ -11,6 +11,7 @@ class User(AbstractUser):
 
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default=BUYER)
 
+    @property
     def initials(self):
         first = (self.first_name or "").strip()
         last = (self.last_name or "").strip()
