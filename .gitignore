@@ -18,8 +18,6 @@ __pycache__/
 # Secret keys & local config
 backend/.env
 backend/.env.local
-frontend/.env
-frontend/.env.local
 
 # =========================
 # PYTHON / DJANGO
@@ -40,6 +38,7 @@ env/
 backend/.venv/
 backend/venv/
 backend/env/
+backend/users/migrations
 
 # Django specific
 staticfiles/
