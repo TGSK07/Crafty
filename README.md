@@ -1,1 +1,1 @@
-"#CRAFTY" 
+#CRAFTY
