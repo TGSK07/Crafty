@@ -13,5 +13,4 @@ class SignUpForm(UserCreationForm):
         fields = Userfields = ("username", "first_name", "last_name", "email", "user_type", "password1", "password2")
 
 class LoginForm(AuthenticationForm):
-    username - forms.CharField(max_length=254)
-    
+    username = forms.CharField(max_length=254)
