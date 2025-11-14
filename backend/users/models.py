@@ -6,7 +6,8 @@ class User(AbstractUser):
     SELLER = 'seller'
     BUYER = 'buyer'
     USER_TYPE_CHOICES = [
-        SELLER, BUYER
+        (SELLER, "Seller"), 
+        (BUYER, "Buyer")
     ]
 
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default=BUYER)
