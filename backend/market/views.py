@@ -5,6 +5,19 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Product, ProductImage, ArtistProfile
 from .forms import ProductForm, ProductImageForm
 from django.contrib import messages
+from django.db import transaction
+
+ALLOWED_IMAGE_CONTENT_TYPES = ("image/png", "image/jpeg", "image/jpg", "image/webp")
+MAX_IMAGE_SIZE = 4 * 1024 * 1024
+
+
+def validate_image_file(f):
+    if f.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        return False, "Unsupported file type."
+    if f.size > MAX_IMAGE_SIZE:
+        return False, "File too large (max 4MB)"
+    return True, ""
+
 
 # Create your views here.
 class ProductListView(View):
@@ -48,12 +61,28 @@ class ProductCreateView(LoginRequiredMixin, View):
             messages.error(request, "Only sellers can create product")
             return redirect("home")
         form = ProductForm(request.POST)
+        files = request.FILES.getlist("images")
         if form.is_valid():
-            product = form.save(commit=False)
-            product.seller = request.user
-            product.save()
-            messages.success(request, "Product created. You can upload inages from admin or edit it.")
+            with transaction.atomic():
+                product = form.save(commit=False)
+                product.seller = request.user
+                product.save()
+
+                for idx, f in enumerate(files):
+                    ok, err = validate_image_file(f)
+                    if not ok:
+                        transaction.set_rollback(True)
+                        messages.error(request, f"Image error: {err}")
+                        return render(request, "market/seller/product_form.html", {"form":form})
+                    ProductImage.objects.create(product=product, image=f, order=idx)
+            messages.success(request, "Product created with images.")
             return redirect("seller_products")
+            
+            # product = form.save(commit=False)
+            # product.seller = request.user
+            # product.save()
+            # messages.success(request, "Product created. You can upload inages from admin or edit it.")
+            # return redirect("seller_products")
         return render(request, "market/seller/product_form.html", {"form":form})
     
 class ProductUpdateView(LoginRequiredMixin, View):
@@ -65,10 +94,23 @@ class ProductUpdateView(LoginRequiredMixin, View):
     def post(self, request, pk):
         product = get_list_or_404(Product, pk=pk, seller=request.user)
         form = ProductForm(request.POST, instance=product)
+        files = request.FILES.getlist("images")
         if form.is_valid():
-            form.save()
+            with transaction.atomic():
+                product = form.save()
+                for idx, f in enumerate(files, start=product.iamges.count()):
+                    ok, err = validate_image_file(f)
+                    if not ok:
+                        transaction.set_rollback(True)
+                        messages.error(request, f"Image error: {err}")
+                        return render(request, "market/seller/product_form.html", {"form":form, "product":product})
+                    ProductImage.objects.create(product=product, image=f, order=idx)    
             messages.success(request, "Product updated.")
-            return redirect("seller_products")
+            return redirect("seller_products")      
+        
+            # form.save()
+            # messages.success(request, "Product updated.")
+            # return redirect("seller_products")
         return render(request, "market/seller/product_form.html", {"form":form, "product":product})
     
 class ProductDeleteView(LoginRequiredMixin, View):
