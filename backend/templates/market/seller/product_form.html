@@ -3,13 +3,14 @@
 {% block content %}
 <h1>{% if product %}Edit{% else %}Create{% endif %} Product</h1>
 
-<form method="post" enctype="multipart/form-data">
+<!-- MAIN PRODUCT FORM (no nested forms inside) -->
+<form id="product-main-form" method="post" enctype="multipart/form-data">
   {% csrf_token %}
   {{ form.non_field_errors }}
   <div>{{ form.title.label_tag }} {{ form.title }}</div>
   <div>{{ form.category.label_tag }} {{ form.category }}</div>
   <div>{{ form.description.label_tag }} {{ form.description }}</div>
-  <div>{{ form.price.label_tag }} {{ form.price }} <small>enter amount in INR</small></div>
+  <div>{{ form.price.label_tag }} {{ form.price }} <small>enter amount in paise (e.g. 10000 = ₹100)</small></div>
   <div>{{ form.stock.label_tag }} {{ form.stock }}</div>
   <div>{{ form.is_active.label_tag }} {{ form.is_active }}</div>
 
@@ -20,25 +21,28 @@
     <p><small>Allowed types: jpg, jpeg, png, webp. Max 4MB each.</small></p>
   </div>
 
-  {% if product and product.images.all %}
-    <h4>Existing Images</h4>
-    <div class="existing-images">
-      {% for img in product.images.all %}
-        <div class="img-item">
-          <img src="{{ img.image.url }}" alt="{{ img.alt_text }}" style="max-width:120px; display:block;">
-          <form method="post" action="{% url 'product_image_delete' img.pk %}" style="display:inline">
-            {% csrf_token %}
-            <button type="submit">Remove</button>
-          </form>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
   <div id="preview" style="display:flex; gap: 8px; margin-top: 8px;"></div>
 
-  <button type="submit">Save</button>
+  <button type="submit" id="save-product-btn">Save</button>
 </form>
+<!-- END MAIN PRODUCT FORM -->
+
+<!-- EXISTING IMAGES SECTION (outside main form) -->
+{% if product and product.images.all %}
+  <h4>Existing Images</h4>
+  <div class="existing-images" style="display:flex; gap:12px; flex-wrap:wrap;">
+    {% for img in product.images.all %}
+      <div class="img-item" style="text-align:center; border:1px solid #eee; padding:6px;">
+        <img src="{{ img.image.url }}" alt="{{ img.alt_text }}" style="max-width:160px; display:block; object-fit:cover; height:120px;">
+        <!-- Separate form for deletion (not nested) -->
+        <form method="post" action="{% url 'product_image_delete' img.pk %}" style="margin-top:6px;">
+          {% csrf_token %}
+          <button type="submit" onclick="return confirm('Remove this image?');">Remove</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
 
 <script>
   // simple client-side preview for chosen images
