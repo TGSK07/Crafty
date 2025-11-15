@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_list_or_404, redirect
+from django.shortcuts import render, get_list_or_404, redirect, get_object_or_404
 from django.views import View
 from django.core.paginator import Paginator
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -10,6 +10,9 @@ from django.db import transaction
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
 from django.http import HttpResponseForbidden
+
+from django.http import Http404
+from django.db.models.query import QuerySet
 
 
 ALLOWED_IMAGE_CONTENT_TYPES = ("image/png", "image/jpeg", "image/jpg", "image/webp")
@@ -39,11 +42,24 @@ class ProductListView(View):
 
 class ProductDetailView(View):
     def get(self, request, slug):
-        product = get_list_or_404(Product, slug=slug, is_ative=True)
+        product = get_list_or_404(Product, slug=slug, is_active=True)
         seller_profile = None
-        if hasattr(product.seller, "artist_profile"):
-            seller_profile = product.seller.artist_profile
-        images = product.images.all()
+        # if hasattr(product.seller, "artist_profile"):
+        #     seller_profile = product.seller.artist_profile
+        # images = product.images.all()
+        if isinstance(product, (list, tuple, QuerySet)):
+            try:
+                product = product[0]
+            except Exception:
+                raise Http404("Product not found")
+
+        # Safely get seller profile (works even if seller or artist_profile missing)
+        seller_profile = None
+        seller = getattr(product, "seller", None)
+        if seller:
+            seller_profile = getattr(seller, "artist_profile", None)
+
+        images = product.images.all() if hasattr(product, "images") else []
         return render(request, "market/product_detail.html", {"product":product, "seller_profile":seller_profile, "images":images})
     
 class SellerProductsView(LoginRequiredMixin, View):
@@ -91,36 +107,66 @@ class ProductCreateView(LoginRequiredMixin, View):
         return render(request, "market/seller/product_form.html", {"form":form})
     
 class ProductUpdateView(LoginRequiredMixin, View):
+    def get_product_or_404(self, pk, user):
+        product_qs = Product.objects.filter(pk=pk, seller=user)
+        product_obj = product_qs.first()
+        if not product_obj:
+            raise Http404("Product not found")
+        return product_obj
+
     def get(self, request, pk):
-        product = get_list_or_404(Product, pk=pk, seller=request.user)
+        product = self.get_product_or_404(pk, request.user)
         form = ProductForm(instance=product)
-        return render(request, "market/seller/product_form.html", {"form":form, "product":product})
+        return render(request, "market/seller/product_form.html", {"form": form, "product": product})
 
     def post(self, request, pk):
-        product = get_list_or_404(Product, pk=pk, seller=request.user)
+        product = self.get_product_or_404(pk, request.user)
         form = ProductForm(request.POST, instance=product)
         files = request.FILES.getlist("images")
+
+        # For debugging: if invalid, we will show errors (no silent failure)
         if form.is_valid():
-            with transaction.atomic():
-                product = form.save()
-                for idx, f in enumerate(files, start=product.iamges.count()):
-                    ok, err = validate_image_file(f)
-                    if not ok:
-                        transaction.set_rollback(True)
-                        messages.error(request, f"Image error: {err}")
-                        return render(request, "market/seller/product_form.html", {"form":form, "product":product})
-                    ProductImage.objects.create(product=product, image=f, order=idx)    
-            messages.success(request, "Product updated.")
-            return redirect("seller_products")      
-        
-            # form.save()
-            # messages.success(request, "Product updated.")
-            # return redirect("seller_products")
-        return render(request, "market/seller/product_form.html", {"form":form, "product":product})
+            try:
+                with transaction.atomic():
+                    product = form.save()
+                    # Handle new uploads (append)
+                    for idx, f in enumerate(files, start=product.images.count()):
+                        ok, err = validate_image_file(f)
+                        if not ok:
+                            # rollback and show message
+                            transaction.set_rollback(True)
+                            messages.error(request, f"Image error: {err}")
+                            return render(request, "market/seller/product_form.html", {"form": form, "product": product})
+                        ProductImage.objects.create(product=product, image=f, order=idx)
+                messages.success(request, "Product updated.")
+                return redirect("seller_products")
+            except Exception as e:
+                # unexpected server error: show message + errors in template
+                messages.error(request, f"An error occurred: {str(e)}")
+                # fallthrough to render form with errors
+        else:
+            # show validation errors
+            messages.error(request, "Please fix the errors below.")
+            # (form.errors will be displayed in template via {{ form.non_field_errors }} and field errors)
+
+        return render(request, "market/seller/product_form.html", {"form": form, "product": product})
+
     
 class ProductDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        product = get_list_or_404(Product, pk=pk, seller=request.user)
+        # robust retrieval
+        product_qs = Product.objects.filter(pk=pk, seller=request.user)
+        if isinstance(product_qs, (list, tuple, QuerySet)):
+            product = product_qs.first()
+        else:
+            product = product_qs
+        if not product:
+            raise Http404("Product not found")
+
+        # final permission check
+        if product.seller != request.user:
+            return HttpResponseForbidden("Not allowed")
+
         product.delete()
         messages.success(request, "Product deleted.")
         return redirect("seller_products")
@@ -128,7 +174,7 @@ class ProductDeleteView(LoginRequiredMixin, View):
 class ProductImageDeleteView(LoginRequiredMixin, View):
     @method_decorator(require_POST)
     def post(self, request, pk):
-        img = get_list_or_404(ProductImage, pk=pk)
+        img = get_object_or_404(ProductImage, pk=pk)
         if img.product.seller != request.user:
             return HttpResponseForbidden("Not Allowed")
         img.delete()
