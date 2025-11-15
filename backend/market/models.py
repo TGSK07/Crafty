@@ -10,7 +10,7 @@ User = settings.AUTH_USER_MODEL
 class ArtistProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="artist_profile")
     display_name = models.CharField(max_length=120)
-    contact_number = models.CharField(max_length=30, blank=True, mull=True)
+    contact_number = models.CharField(max_length=30, blank=True, null=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=80, blank=True)
     image = models.ImageField(upload_to="artists/", blank=True, null=True)

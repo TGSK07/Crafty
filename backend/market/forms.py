@@ -4,10 +4,10 @@ from .models import Product, ProductImage
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ["title", "categoyr", "description", "price", "stock", "is_active", "created_at", "updated_at"]
+        fields = ["title", "category", "description", "price", "stock", "is_active"]
 
 class ProductImageForm(forms.ModelForm):
     class Meta:
         model = ProductImage
-        fields = ["iamge", "alt_text", "order"]
+        fields = ["image", "alt_text", "order"]
     

@@ -18,7 +18,6 @@ def unique_slugify(instance, value, slug_field_name="slug"):
     return slug
 
 @receiver(pre_save, sender=Product)
-def set_product_slug(sender, isntance, **kwargs):
+def set_product_slug(sender, instance, **kwargs):
     if not instance.slug:
         instance.slug = unique_slugify(instance, instance.title)
-        
