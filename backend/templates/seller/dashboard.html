@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Seller Dashboard — Crafty{% endblock %}
+
+{% block content %}
+  <h1>Seller Dashboard</h1>
+
+  <p>Welcome, {{ user.first_name }}!</p>
+
+  <section class="dashboard-section">
+    <h2>Your Actions</h2>
+
+    <ul class="dashboard-links">
+      <li><a href="#">➕ Add New Product</a></li>
+      <li><a href="#">📦 View Your Products</a></li>
+      <li><a href="#">💰 Orders Received</a></li>
+      <li><a href="#">✏️ Edit Profile</a></li>
+    </ul>
+  </section>
+
+  <section class="dashboard-section">
+    <h2>Quick Stats (Coming Soon)</h2>
+    <p class="muted">Your sales stats will appear here…</p>
+  </section>
+{% endblock %}
