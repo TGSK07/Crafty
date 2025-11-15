@@ -39,6 +39,7 @@ backend/.venv/
 backend/venv/
 backend/env/
 backend/users/migrations
+backend/market/migrations
 
 # Django specific
 staticfiles/
