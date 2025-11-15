@@ -2,15 +2,62 @@
 {% block title %}{% if product %}Edit{% else %}Create{% endif %} Product · Crafty{% endblock %}
 {% block content %}
 <h1>{% if product %}Edit{% else %}Create{% endif %} Product</h1>
-<form method="post">
+
+<form method="post" enctype="multipart/form-data">
   {% csrf_token %}
   {{ form.non_field_errors }}
   <div>{{ form.title.label_tag }} {{ form.title }}</div>
   <div>{{ form.category.label_tag }} {{ form.category }}</div>
   <div>{{ form.description.label_tag }} {{ form.description }}</div>
-  <div>{{ form.price_paise.label_tag }} {{ form.price_paise }} <small>enter amount in paise (e.g. 10000 = ₹100)</small></div>
+  <div>{{ form.price.label_tag }} {{ form.price }} <small>enter amount in INR</small></div>
   <div>{{ form.stock.label_tag }} {{ form.stock }}</div>
   <div>{{ form.is_active.label_tag }} {{ form.is_active }}</div>
+
+  <hr />
+  <div>
+    <label for="id_images">Product Images (you can select multiple)</label><br>
+    <input type="file" id="id_images" name="images" multiple accept="image/*">
+    <p><small>Allowed types: jpg, jpeg, png, webp. Max 4MB each.</small></p>
+  </div>
+
+  {% if product and product.images.all %}
+    <h4>Existing Images</h4>
+    <div class="existing-images">
+      {% for img in product.images.all %}
+        <div class="img-item">
+          <img src="{{ img.image.url }}" alt="{{ img.alt_text }}" style="max-width:120px; display:block;">
+          <form method="post" action="{% url 'product_image_delete' img.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button type="submit">Remove</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div id="preview" style="display:flex; gap: 8px; margin-top: 8px;"></div>
+
   <button type="submit">Save</button>
 </form>
+
+<script>
+  // simple client-side preview for chosen images
+  const input = document.getElementById('id_images');
+  const preview = document.getElementById('preview');
+  if (input) {
+    input.addEventListener('change', (e) => {
+      preview.innerHTML = '';
+      const files = Array.from(e.target.files).slice(0, 6); // limit previews
+      files.forEach(file => {
+        const url = URL.createObjectURL(file);
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.maxWidth = '120px';
+        img.style.maxHeight = '120px';
+        img.style.objectFit = 'cover';
+        preview.appendChild(img);
+      });
+    });
+  }
+</script>
 {% endblock %}
