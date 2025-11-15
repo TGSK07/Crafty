@@ -26,7 +26,7 @@ class SignUpView(View):
 
             if user.user_type == User.SELLER:
                 return redirect("seller_dashboard")
-            return redirect("home")
+            return redirect("/")
         return render(request, self.template_name, {"form":form})
     
 class LoginView(View):
@@ -37,7 +37,7 @@ class LoginView(View):
         return render(request, self.template_name, {"form":form})
     
     def post(self, request):
-        form =- LoginForm(request, data=request.POST)
+        form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
@@ -47,7 +47,7 @@ class LoginView(View):
 class LogoutView(View):
     def post(self, request):
         logout(request)
-        return redirect("")
+        return redirect("/")
     
 class ProfileView(LoginRequiredMixin, View):
     template_name = "auth/profile.html"
