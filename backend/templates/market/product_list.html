@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Browse · Crafty{% endblock %}
+{% block content %}
+<h1>Browse Art & Products</h1>
+
+<form method="get" class="search-form">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search products..." />
+  <button type="submit">Search</button>
+</form>
+
+<div class="grid">
+  {% for product in page_obj.object_list %}
+    <article class="card">
+      <a href="{{ product.get_absolute_url }}">
+        {% if product.images.first %}
+          <img src="{{ product.images.first.image.url }}" alt="{{ product.title }}" />
+        {% else %}
+          <div class="placeholder">No image</div>
+        {% endif %}
+      </a>
+      <h3><a href="{{ product.get_absolute_url }}">{{ product.title }}</a></h3>
+      <p>{{ product.get_price_display }}</p>
+    </article>
+  {% empty %}
+    <p>No products found.</p>
+  {% endfor %}
+</div>
+
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">Previous</a>
+  {% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}">Next</a>
+  {% endif %}
+</div>
+{% endblock %}

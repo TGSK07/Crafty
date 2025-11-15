@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Your Products · Crafty{% endblock %}
+{% block content %}
+<h1>Your Products</h1>
+<p><a href="{% url 'product_create' %}">Create new product</a></p>
+<ul>
+  {% for p in products %}
+    <li>
+      <strong>{{ p.title }}</strong> — {{ p.get_price_display }} — 
+      <a href="{% url 'product_edit' p.pk %}">Edit</a>
+      <form method="post" action="{% url 'product_delete' p.pk %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+      </form>
+    </li>
+  {% empty %}
+    <li>No products yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

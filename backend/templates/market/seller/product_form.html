@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{% if product %}Edit{% else %}Create{% endif %} Product · Crafty{% endblock %}
+{% block content %}
+<h1>{% if product %}Edit{% else %}Create{% endif %} Product</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div>{{ form.title.label_tag }} {{ form.title }}</div>
+  <div>{{ form.category.label_tag }} {{ form.category }}</div>
+  <div>{{ form.description.label_tag }} {{ form.description }}</div>
+  <div>{{ form.price_paise.label_tag }} {{ form.price_paise }} <small>enter amount in paise (e.g. 10000 = ₹100)</small></div>
+  <div>{{ form.stock.label_tag }} {{ form.stock }}</div>
+  <div>{{ form.is_active.label_tag }} {{ form.is_active }}</div>
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

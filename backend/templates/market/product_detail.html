@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title }} · Crafty{% endblock %}
+{% block content %}
+<article>
+  <h1>{{ product.title }}</h1>
+  <p>{{ product.get_price_display }}</p>
+  <div class="gallery">
+    {% for img in images %}
+      <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}">
+    {% empty %}
+      <p>No images</p>
+    {% endfor %}
+  </div>
+  <div class="description">
+    {{ product.description|linebreaks }}
+  </div>
+
+  <aside class="seller-info">
+    <h3>Seller</h3>
+    {% if seller_profile %}
+      {% if seller_profile.image %}
+        <img src="{{ seller_profile.image.url }}" alt="{{ seller_profile.display_name }}" />
+      {% endif %}
+      <p><strong>{{ seller_profile.display_name }}</strong></p>
+      <p>{{ seller_profile.city }}</p>
+      <p>Contact: {{ seller_profile.contact_number }}</p>
+    {% else %}
+      <p>Seller information not available.</p>
+    {% endif %}
+  </aside>
+</article>
+{% endblock %}
