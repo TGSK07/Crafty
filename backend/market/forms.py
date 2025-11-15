@@ -5,6 +5,9 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ["title", "category", "description", "price", "stock", "is_active"]
+        widgets = {
+            "description":forms.Textarea(attrs={"rows":4})
+        }
 
 class ProductImageForm(forms.ModelForm):
     class Meta:
