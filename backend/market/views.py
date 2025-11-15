@@ -7,6 +7,11 @@ from .forms import ProductForm, ProductImageForm
 from django.contrib import messages
 from django.db import transaction
 
+from django.views.decorators.http import require_POST
+from django.utils.decorators import method_decorator
+from django.http import HttpResponseForbidden
+
+
 ALLOWED_IMAGE_CONTENT_TYPES = ("image/png", "image/jpeg", "image/jpg", "image/webp")
 MAX_IMAGE_SIZE = 4 * 1024 * 1024
 
@@ -119,3 +124,13 @@ class ProductDeleteView(LoginRequiredMixin, View):
         product.delete()
         messages.success(request, "Product deleted.")
         return redirect("seller_products")
+
+class ProductImageDeleteView(LoginRequiredMixin, View):
+    @method_decorator(require_POST)
+    def post(self, request, pk):
+        img = get_list_or_404(ProductImage, pk=pk)
+        if img.product.seller != request.user:
+            return HttpResponseForbidden("Not Allowed")
+        img.delete()
+        messages.success(request, "Image removed.")
+        return redirect("product_edit", pk=img.product.pk)
