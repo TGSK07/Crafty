@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "users",
     "market.apps.MarketConfig",
     "orders",
+    
 ]
 
 
