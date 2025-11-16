@@ -17,7 +17,7 @@ from django.db.models.query import QuerySet
 
 
 ALLOWED_IMAGE_CONTENT_TYPES = ("image/png", "image/jpeg", "image/jpg", "image/webp")
-MAX_IMAGE_SIZE = 4 * 1024 * 1024
+MAX_IMAGE_SIZE = 2 * 1024 * 1024
 
 User = get_user_model()
 
@@ -36,7 +36,7 @@ class ProductListView(View):
         products = Product.objects.filter(is_active=True).order_by("-created_at")
         if q:
             products = products.filter(title__icontains=q)
-        paginator = Paginator(products, 12)
+        paginator = Paginator(products, 5)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
         return render(request, "market/product_list.html", {"page_obj":page_obj, "q":q})
