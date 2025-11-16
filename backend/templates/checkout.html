@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Checkout — Crafty{% endblock %}
+{% block content %}
+  <h1>Checkout</h1>
+
+  <h3>Order Summary</h3>
+  <ul>
+    {% for it in items %}
+      <li>{{ it.product.title }} — Qty: {{ it.quantity }} — ₹{{ it.total|floatformat:2 }}</li>
+    {% endfor %}
+  </ul>
+  <p><strong>Total: ₹{{ total|floatformat:2 }}</strong></p>
+
+  <button id="pay-now">Pay with Razorpay</button>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    document.getElementById('pay-now').addEventListener('click', async function () {
+      // create order on server (POST)
+      const resp = await fetch("{% url 'checkout' %}", {method: "POST", headers: {'X-CSRFToken': '{{ csrf_token }}'}});
+      const data = await resp.json();
+      const options = {
+        key: data.razorpay_key_id,
+        amount: data.amount, // in paise
+        currency: data.currency,
+        name: "Crafty",
+        description: `Order #${data.order_id}`,
+        order_id: data.razorpay_order_id,
+        handler: function (response) {
+          // send verification to server
+          fetch("{% url 'verify_payment' %}", {
+            method: "POST",
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: JSON.stringify({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              order_id: data.order_id
+            })
+          }).then(r => r.json()).then(res => {
+            if (res.status === "ok") {
+              alert("Payment successful! Order id: " + res.order_id);
+              window.location.href = "/"; // or redirect to order detail
+            } else {
+              alert("Payment verification failed.");
+            }
+          }).catch(err => {
+            alert("Payment verification error.");
+            console.error(err);
+          });
+        },
+        prefill: {
+          name: "{{ request.user.get_full_name|default:request.user.username }}",
+          email: "{{ request.user.email }}",
+        },
+        theme: {color: "#0ea5a5"}
+      };
+      const rzp = new Razorpay(options);
+      rzp.open();
+    });
+  </script>
+{% endblock %}
