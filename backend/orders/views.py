@@ -1,4 +1,4 @@
-import os, hmac, hashlib, json, razorpay
+import os, hmac, hashlib, json, razorpay, traceback
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
@@ -38,6 +38,20 @@ class CartView(View):
         elif action == "remove":
             remove_from_cart(request.session, pid)
         
+        # updated = False
+        for k, v in request.POST.items():
+            if k.startswith("qty_"):
+                try:
+                    product_id = k.split("_", 1)[1]
+                    qty = int(v)
+                    set_quantity(request.session, product_id, qty)
+                    # updated = True
+                except Exception as e:
+                    print("ERROR:", str())
+        
+        # if updated:
+        #     return redirect("cart")
+
         return redirect("cart")
 
 class CheckoutView(LoginRequiredMixin, View):
@@ -51,31 +65,43 @@ class CheckoutView(LoginRequiredMixin, View):
         return render(request, "checkout.html", {"items":items, "total":total, "razorpay_key_id":RAZORPAY_KEY_ID})
 
     def post(self, request):
-        # create an Order and a Razorpay order
-        items, total = cart_items_and_total(request.session)
-        if not items:
-            return HttpResponseBadRequest(request.session)
-        
-        # create order instance
-        order = Order.objects.create(buyer=request.user, total_amount_int=total, status=Order.STATUS_PENDING)
-        for item in items:
-            OrderItem.objects.create(order=order, product=item["product"], unit_price_int=item["unit_price_int"], quantity=item["quantity"])
+        try:
+            # create an Order and a Razorpay order
+            items, total = cart_items_and_total(request.session)
+            if not items:
+                return JsonResponse({"error": "Cart is empty"}, status=400)
+            
+            # create order instance
+            order = Order.objects.create(buyer=request.user, total_amount_inr=total, status=Order.STATUS_PENDING)
+            for item in items:
+                OrderItem.objects.create(order=order, product=item["product"], unit_price_inr=item["unit_price_inr"], quantity=item["quantity"])
 
-        # create razorpay order
-        razor_amount = int(float(total)*100)
-        razor_order = client.order.create(dict(amount=razor_amount, currency="INR", receipt=f"order_{order.pk}", payment_capture=1))
-        order.razorpay_order_id = razor_order.get("id")
-        order.save()
+            # create razorpay order
+            razor_amount = int(float(total)*100)
+            razor_order = client.order.create(dict(amount=razor_amount, currency="INR", receipt=f"order_{order.pk}", payment_capture=1))
+            order.razorpay_order_id = razor_order.get("id")
+            order.save()
 
-        data = {
-            "razorpay_order_id": razor_order.get("id"),
-            "order_id": order.pk,
-            "amount": razor_amount,
-            "currency": "INR",
-            "razorpay_key_id": RAZORPAY_KEY_ID,
-        }
+            data = {
+                "razorpay_order_id": order.razorpay_order_id,
+                "order_id": order.pk,
+                "amount": razor_amount,
+                "currency": "INR",
+                "razorpay_key_id": RAZORPAY_KEY_ID,
+            }
 
-        return JsonResponse(data)
+            return JsonResponse(data)
+
+        except Exception as e:
+            traceback.print_exc()
+
+            try:
+                if 'order' in locals() and isinstance(order, Order) and order.status==Order.STATUS_PENDING:
+                    order.delete()
+            except Exception:
+                pass
+
+            return JsonResponse({"error": "Could not create order", "details":str(e)}, status=500)
     
 class PaymentVerifyView(LoginRequiredMixin, View):
     def post(self, request):
@@ -111,7 +137,7 @@ class PaymentVerifyView(LoginRequiredMixin, View):
         order.status = Order.STATUS_PAID
         order.save()
 
-        clear_cart(request.sesssion) # clear session cart
+        clear_cart(request.session) # clear session cart
         
         return JsonResponse({"status":"ok", "order_id":order.pk})
     
