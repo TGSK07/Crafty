@@ -6,6 +6,7 @@ from .models import Product, ProductImage, ArtistProfile
 from .forms import ProductForm, ProductImageForm
 from django.contrib import messages
 from django.db import transaction
+from django.contrib.auth import get_user_model
 
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
@@ -18,6 +19,7 @@ from django.db.models.query import QuerySet
 ALLOWED_IMAGE_CONTENT_TYPES = ("image/png", "image/jpeg", "image/jpg", "image/webp")
 MAX_IMAGE_SIZE = 4 * 1024 * 1024
 
+User = get_user_model()
 
 def validate_image_file(f):
     if f.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
@@ -180,3 +182,27 @@ class ProductImageDeleteView(LoginRequiredMixin, View):
         img.delete()
         messages.success(request, "Image removed.")
         return redirect("product_edit", pk=img.product.pk)
+    
+class SellerDashboardView(LoginRequiredMixin, View):
+    """
+    Seller dashboard: shows quick actions and counts.
+    Only accessible to users with user_type == 'seller'.
+    """
+    def get(self, request):
+        # guard: only sellers allowed
+        if getattr(request.user, "user_type", None) != User.SELLER:
+            messages.error(request, "Only sellers can access the seller dashboard.")
+            return redirect("home")
+
+        # product count for this seller
+        products_count = Product.objects.filter(seller=request.user).count()
+
+        # orders_count placeholder (Module 3 will replace with real data)
+        orders_count = 0
+        # if you have an Order model, set orders_count = Order.objects.filter(seller=request.user).count()
+
+        context = {
+            "products_count": products_count,
+            "orders_count": orders_count,
+        }
+        return render(request, "seller/dashboard.html", context)

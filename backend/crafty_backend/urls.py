@@ -19,12 +19,13 @@ from django.urls import path, include
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+from market.views import SellerDashboardView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("accounts/", include("users.urls")),
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
-    path("seller/dashboard/", TemplateView.as_view(template_name="seller/dashboard.html"), name="seller_dashboard"),
+    path("seller/dashboard/", SellerDashboardView.as_view(), name="seller_dashboard"),
     path("market/", include("market.urls"))
 ]
 

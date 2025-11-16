@@ -5,21 +5,33 @@
 {% block content %}
   <h1>Seller Dashboard</h1>
 
-  <p>Welcome, {{ user.first_name }}!</p>
+  <p>Welcome, {{ user.first_name|default:user.username }}!</p>
 
   <section class="dashboard-section">
     <h2>Your Actions</h2>
 
     <ul class="dashboard-links">
-      <li><a href="#">➕ Add New Product</a></li>
-      <li><a href="#">📦 View Your Products</a></li>
-      <li><a href="#">💰 Orders Received</a></li>
-      <li><a href="#">✏️ Edit Profile</a></li>
+      <li><a href="{% url 'product_create' %}">➕ Add New Product</a></li>
+      <li><a href="{% url 'seller_products' %}">📦 View Your Products</a></li>
+      <li><a href="{% url 'product_list' %}">🛍️ View Market</a></li>
+      <li><a href="{% url 'profile' %}">✏️ Edit Profile</a></li>
     </ul>
   </section>
 
   <section class="dashboard-section">
-    <h2>Quick Stats (Coming Soon)</h2>
-    <p class="muted">Your sales stats will appear here…</p>
+    <h2>Quick Stats</h2>
+    <div class="stats-grid" style="display:flex; gap:12px; align-items:stretch;">
+      <div class="stat-card" style="border:1px solid #eee; padding:12px; border-radius:8px;">
+        <h3>{{ products_count }}</h3>
+        <p>Products listed</p>
+      </div>
+
+      <div class="stat-card" style="border:1px solid #eee; padding:12px; border-radius:8px;">
+        <h3>{{ orders_count }}</h3>
+        <p>Orders received</p>
+      </div>
+    </div>
+
+    <p class="muted">More seller analytics will appear here in later modules.</p>
   </section>
 {% endblock %}
