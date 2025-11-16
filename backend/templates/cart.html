@@ -12,12 +12,12 @@
           {% for it in items %}
             <tr>
               <td><a href="{{ it.product.get_absolute_url }}">{{ it.product.title }}</a></td>
-              <td>₹{{ it.unit_price_inr}}</td>
+              <td>₹{{ it.unit_price_inr|floatformat:2}}</td>
               <td>
                 <input type="number" name="qty_{{ it.product.pk }}" value="{{ it.quantity }}" min="1" style="width:60px;">
                 <button type="submit" name="action" value="set" formaction="{% url 'cart' %}" formmethod="post" onclick="setProductId({{ it.product.pk }})">Update</button>
               </td>
-              <td>₹{{ it.total }}</td>
+              <td>₹{{ it.total|floatformat:2 }}</td>
               <td>
                 <form method="post" action="{% url 'cart' %}">
                   {% csrf_token %}
@@ -31,7 +31,7 @@
       </table>
     </form>
 
-    <p><strong>Grand Total:</strong> ₹{{ total }}</p>
+    <p><strong>Grand Total:</strong> ₹{{ total|floatformat:2 }}</p>
     <p>
       <a href="{% url 'checkout' %}">Proceed to Checkout</a>
     </p>
