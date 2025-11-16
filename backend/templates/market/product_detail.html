@@ -3,7 +3,10 @@
 {% block content %}
 <article>
   <h1>{{ product.title }}</h1>
-  <p>{{ product.get_price_display }}</p>
+
+  <!-- Price (INR Decimal) -->
+  <p>₹{{ product.price_inr }}</p>
+
   <div class="gallery">
     {% for img in images %}
       <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}">
@@ -11,14 +14,19 @@
       <p>No images</p>
     {% endfor %}
   </div>
+
   <div class="description">
     {{ product.description|linebreaks }}
   </div>
-    <form method="post" action="{% url 'add_to_cart' product.pk %}">
+
+  <!-- Add-to-cart form (AJAX: no redirect) -->
+  <form id="add-to-cart-form" class="add-to-cart-form" method="post" action="{% url 'add_to_cart' product.pk %}">
     {% csrf_token %}
-    <label>Qty: <input type="number" name="qty" value="1" min="1" style="width:60px;"></label>
-    <button type="submit">Add to cart</button>
-    </form>
+    <label>Qty:
+      <input type="number" name="qty" id="cart-qty" value="1" min="1" style="width:72px;">
+    </label>
+    <button type="submit" id="add-to-cart-btn">Add to cart</button>
+  </form>
 
   <aside class="seller-info">
     <h3>Seller</h3>
@@ -34,4 +42,82 @@
     {% endif %}
   </aside>
 </article>
+
+<!-- Self-contained AJAX add-to-cart script -->
+<script>
+(function () {
+  // local getCookie to avoid dependency issues
+  function getCookie(name) {
+    const v = `; ${document.cookie}`;
+    const parts = v.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  // Wait for DOM so element exists
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      const form = document.getElementById('add-to-cart-form');
+      if (!form) {
+        console.warn('Add-to-cart form not found on page.');
+        return;
+      }
+      const btn = document.getElementById('add-to-cart-btn');
+      const csrftoken = getCookie('csrftoken');
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();              // stop normal redirect submit
+        btn.disabled = true;
+        btn.dataset.origText = btn.textContent;
+
+        const url = form.action;
+        const formData = new FormData(form);
+
+        try {
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': csrftoken
+            },
+            body: formData
+          });
+
+          console.log('Add-to-cart response status:', resp.status);
+
+          if (!resp.ok) {
+            const txt = await resp.text();
+            console.error('Add to cart failed:', resp.status, txt);
+            alert('Could not add to cart: ' + (txt || resp.status));
+            return;
+          }
+
+          const j = await resp.json();
+          if (j && j.success) {
+            // update navbar badge if available
+            if (typeof window.setCartCount === 'function') {
+              window.setCartCount(j.count || 0);
+            }
+            // quick UX feedback
+            btn.textContent = 'Added ✓';
+            setTimeout(() => btn.textContent = btn.dataset.origText || 'Add to cart', 1200);
+          } else {
+            console.warn('Add-to-cart response JSON:', j);
+            alert('Could not add to cart. See console for details.');
+          }
+        } catch (err) {
+          console.error('Add-to-cart fetch error:', err);
+          alert('Add to cart failed (see console).');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+    } catch (outerErr) {
+      console.error('Add-to-cart init error:', outerErr);
+    }
+  });
+})();
+</script>
+
 {% endblock %}

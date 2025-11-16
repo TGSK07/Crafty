@@ -52,3 +52,12 @@ def cart_items_and_total(session):
     
     return items, total
 
+def cart_total_quantity(session):
+    cart = get_cart(session)
+    total_qty = 0
+    for v in cart.values():
+        try:
+            total_qty += int(v)
+        except Exception:
+            continue
+    return total_qty

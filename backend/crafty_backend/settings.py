@@ -40,9 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     "users",
-    "market.apps.MarketConfig",
     "orders",
-    
+    "market.apps.MarketConfig",
+
 ]
 
 

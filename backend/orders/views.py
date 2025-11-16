@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .cart import add_to_cart, get_cart, cart_items_and_total, set_quantity, remove_from_cart, clear_cart
+from .cart import add_to_cart, get_cart, cart_items_and_total, set_quantity, remove_from_cart, clear_cart, cart_total_quantity
 from .models import Order, OrderItem, Payment
 
 # Razorpay config
@@ -20,9 +20,20 @@ class AddToCartView(View):
     def post(self, request, product_id):
         qty = int(request.POST.get("qty", 1))
         add_to_cart(request.session, product_id, qty)
+        total_qty = cart_total_quantity(request.session)
+
+        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+        if is_ajax:
+            return JsonResponse({"success": True, "count":total_qty})
+        
         messages.success(request, "Added to cart.")
         return redirect("cart")
-    
+
+class CartCountView(View):
+    def get(self, request):
+        total_qty = cart_total_quantity(request.session)
+        return JsonResponse({"count": total_qty})
+
 class CartView(View):
     def get(self, request):
         items, total = cart_items_and_total(request.session)

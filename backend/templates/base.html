@@ -10,31 +10,34 @@
 </head>
 <body data-theme="light">
   <header class="site-header">
-    <!-- backend/templates/base.html -->
-    <nav class="nav">
-      <div class="nav-left">
-        <a class="brand" href="{% url 'home' %}">Crafty</a>
-        <a href="{% url 'product_list' %}">Market</a>
-      </div>
+      <nav class="nav">
+        <div class="nav-left">
+          <a class="brand" href="{% url 'home' %}">Crafty</a>
+          <a href="{% url 'product_list' %}">Market</a>
+        </div>
 
-      <div class="nav-right">
-        {% if user.is_authenticated %}
-          {% if user.user_type == 'seller' %}
-            <a href="{% url 'seller_dashboard' %}">Seller Dashboard</a>
+        <div class="nav-right">
+          <!-- cart icon -->
+          <a href="{% url 'cart' %}" class="cart-link" style="margin-right:12px;">
+            🛒 Cart <span id="cart-count" style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:12px;font-weight:600;">0</span>
+          </a>
+
+          {% if user.is_authenticated %}
+            {% if user.user_type == 'seller' %}
+              <a href="{% url 'seller_dashboard' %}">Seller Dashboard</a>
+            {% endif %}
+            <a href="{% url 'profile' %}">Profile</a>
+            <form method="post" action="{% url 'logout' %}" style="display:inline">
+              {% csrf_token %}
+              <button class="btn" type="submit">Logout</button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'signup' %}">Sign up</a>
           {% endif %}
-          <a href="{% url 'profile' %}">Profile</a>
-          <form method="post" action="{% url 'logout' %}" style="display:inline">
-            {% csrf_token %}
-            <button class="btn" type="submit">Logout</button>
-          </form>
-        {% else %}
-          <a href="{% url 'login' %}">Login</a>
-          <a href="{% url 'signup' %}">Sign up</a>
-        {% endif %}
-        <button id="theme-toggle" class="theme-toggle">🌙</button>
-      </div>
-    </nav>
-
+          <button id="theme-toggle" class="theme-toggle">🌙</button>
+        </div>
+      </nav>
     <!-- show messages -->
     {% if messages %}
       <ul class="messages">
@@ -53,5 +56,43 @@
   <footer class="site-footer">
     <small>© {{ now.year }} Crafty</small>
   </footer>
+
+
+<script>
+  // Helper: get cookie value (CSRF)
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+
+  // update cart-count DOM
+  function setCartCount(n) {
+    const el = document.getElementById('cart-count');
+    if (!el) return;
+    el.textContent = n;
+    // small visual pulse
+    el.style.transform = 'scale(1.1)';
+    setTimeout(()=> el.style.transform = 'scale(1)', 150);
+  }
+
+  // fetch initial cart count on load
+  document.addEventListener('DOMContentLoaded', async function () {
+    try {
+      const resp = await fetch("{% url 'cart_count' %}");
+      if (resp.ok) {
+        const j = await resp.json();
+        setCartCount(j.count || 0);
+      }
+    } catch (e) {
+      // ignore silently
+      console.error('cart count load error', e);
+    }
+  });
+
+  // expose global function so add-to-cart script can call it
+  window.setCartCount = setCartCount;
+</script>
+
 </body>
 </html>
