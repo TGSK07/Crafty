@@ -14,6 +14,11 @@
   <div class="description">
     {{ product.description|linebreaks }}
   </div>
+    <form method="post" action="{% url 'add_to_cart' product.pk %}">
+    {% csrf_token %}
+    <label>Qty: <input type="number" name="qty" value="1" min="1" style="width:60px;"></label>
+    <button type="submit">Add to cart</button>
+    </form>
 
   <aside class="seller-info">
     <h3>Seller</h3>
