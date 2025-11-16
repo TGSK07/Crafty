@@ -4,54 +4,46 @@
   <h1>Your Cart</h1>
 
   {% if items %}
-    <form method="post" action="{% url 'cart' %}">
-      {% csrf_token %}
-      <table>
-        <thead><tr><th>Product</th><th>Unit Price</th><th>Qty</th><th>Total</th><th>Action</th></tr></thead>
-        <tbody>
-          {% for it in items %}
-            <tr>
-              <td><a href="{{ it.product.get_absolute_url }}">{{ it.product.title }}</a></td>
-              <td>₹{{ it.unit_price_inr|floatformat:2}}</td>
-              <td>
-                <input type="number" name="qty_{{ it.product.pk }}" value="{{ it.quantity }}" min="1" style="width:60px;">
-                <button type="submit" name="action" value="set" formaction="{% url 'cart' %}" formmethod="post" onclick="setProductId({{ it.product.pk }})">Update</button>
-              </td>
-              <td>₹{{ it.total|floatformat:2 }}</td>
-              <td>
-                <form method="post" action="{% url 'cart' %}">
-                  {% csrf_token %}
-                  <input type="hidden" name="product_id" value="{{ it.product.pk }}">
-                  <button type="submit" name="action" value="remove">Remove</button>
-                </form>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </form>
+    <table>
+      <thead>
+        <tr><th>Product</th><th>Unit Price</th><th>Qty</th><th>Total</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for it in items %}
+          <tr>
+            <td><a href="{{ it.product.get_absolute_url }}">{{ it.product.title }}</a></td>
+            <td>₹{{ it.unit_price_inr }}</td>
 
-    <p><strong>Grand Total:</strong> ₹{{ total|floatformat:2 }}</p>
-    <p>
-      <a href="{% url 'checkout' %}">Proceed to Checkout</a>
-    </p>
+            <!-- Update form: separate per item -->
+            <td>
+              <form method="post" action="{% url 'cart' %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ it.product.pk }}">
+                <input type="number" name="qty" value="{{ it.quantity }}" min="1" style="width:72px;">
+                <button type="submit" name="action" value="set">Update</button>
+              </form>
+            </td>
+
+            <td>₹{{ it.total }}</td>
+
+            <!-- Remove form: separate per item -->
+            <td>
+              <form method="post" action="{% url 'cart' %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ it.product.pk }}">
+                <button type="submit" name="action" value="remove" onclick="return confirm('Remove this item?');">Remove</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p><strong>Grand Total:</strong> ₹{{ total }}</p>
+    <p><a href="{% url 'checkout' %}">Proceed to Checkout</a></p>
 
   {% else %}
     <p>Your cart is empty. <a href="{% url 'product_list' %}">Shop now</a></p>
   {% endif %}
 
-<script>
-  function setProductId(productId) {
-    // set a hidden input for the updating form
-    let form = document.querySelector('form[method="post"]');
-    if (!form) return;
-    let existing = form.querySelector('input[name="product_id"]');
-    if (existing) existing.value = productId;
-    else {
-      const input = document.createElement('input');
-      input.type = 'hidden'; input.name = 'product_id'; input.value = productId;
-      form.appendChild(input);
-    }
-  }
-</script>
 {% endblock %}
