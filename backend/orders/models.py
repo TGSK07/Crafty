@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-
+from decimal import Decimal
 
 User = settings.AUTH_USER_MODEL
 
@@ -41,7 +41,7 @@ class Payment(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="payments")
     razorpay_payment_id = models.CharField(max_length=200)
     razorpay_signature = models.CharField(max_length=300)
-    amount_inr = models.PositiveIntegerField()
+    amount_inr = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
