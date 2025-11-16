@@ -62,7 +62,7 @@ class CheckoutView(LoginRequiredMixin, View):
             OrderItem.objects.create(order=order, product=item["product"], unit_price_int=item["unit_price_int"], quantity=item["quantity"])
 
         # create razorpay order
-        razor_amount = int(total*100)
+        razor_amount = int(float(total)*100)
         razor_order = client.order.create(dict(amount=razor_amount, currency="INR", receipt=f"order_{order.pk}", payment_capture=1))
         order.razorpay_order_id = razor_order.get("id")
         order.save()
@@ -99,8 +99,8 @@ class PaymentVerifyView(LoginRequiredMixin, View):
         order = get_object_or_404(Order, pk=order_id, razorpay_order_id=razorpay_order_id)
         try:
             payment_data  = client.payment.fetch(razorpay_payment_id)
-            paid_amount = int(payment_data.get("amount", 0))
-        
+            paid_amount = int(payment_data.get("amount", 0))/100
+
         except Exception:
             paid_amount = None
         
