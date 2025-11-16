@@ -48,7 +48,7 @@ def cart_items_and_total(session):
             "unit_price_inr":product.price,
             "total":product.price * qty
         }) 
-        total += product.price * qty
+        total += float(product.price) * qty
     
     return items, total
 
