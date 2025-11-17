@@ -1,6 +1,167 @@
 {% extends "base.html" %}
-{% block title %}Crafty — Home{% endblock %}
+{% load static %}
+{% block title %}Crafty — Authentic Handmade Goods{% endblock %}
+
 {% block content %}
-  <h1>Welcome to Crafty</h1>
-  <p>Discover local art made with love.</p>
+    <section class="hero-section">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <h1>Discover Authentic Creations from Local Artisans</h1>
+                <p>Handmade crafts, ethically sourced from talented creators in your community.</p>
+                <div class="hero-actions">
+                    <a href="{% url 'product_list' %}" class="btn btn-primary">Shop Now</a>
+                    <a href="{% url 'signup' %}" class="btn btn-outline">Become a Seller</a>
+                </div>
+            </div>
+            <div class="hero-image-container">
+                <img src="{% static 'images/hero_pottery.avif' %}" alt="Hands shaping clay on a potter's wheel" class="hero-image">
+                <span class="handmade-tag">Handmade</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="container" style="margin-top: var(--spacing-xl);">
+        <h2>Explore Categories</h2>
+        <div class="category-grid">
+            <a href="{% url 'product_list' %}?category=home_decor" class="category-item">
+                <img src="{% static 'images/product_placeholder.jpg' %}" alt="Handcrafted Home Decor" class="category-item-image">
+                <span class="handmade-tag">Handmade</span>
+                <div class="category-info">
+                    <h3>Handcrafted Home Decor</h3>
+                </div>
+            </a>
+            <a href="{% url 'product_list' %}?category=paintings_art" class="category-item">
+                <img src="{% static 'images/product_placeholder.jpg' %}" alt="Paintings & Art" class="category-item-image">
+                <span class="handmade-tag">Handmade</span>
+                <div class="category-info">
+                    <h3>Paintings & Art</h3>
+                </div>
+            </a>
+            <a href="{% url 'product_list' %}?category=jewelry" class="category-item">
+                <img src="{% static 'images/product_placeholder.jpg' %}" alt="Jewelry" class="category-item-image">
+                <span class="handmade-tag">Handmade</span>
+                <div class="category-info">
+                    <h3>Jewelry</h3>
+                </div>
+            </a>
+            <a href="{% url 'product_list' %}?category=clothing" class="category-item">
+                <img src="{% static 'images/product_placeholder.jpg' %}" alt="Fabric & Clothing" class="category-item-image">
+                <span class="handmade-tag">Handmade</span>
+                <div class="category-info">
+                    <h3>Fabric & Clothing</h3>
+                </div>
+            </a>
+            <a href="{% url 'product_list' %}?category=wooden_crafts" class="category-item">
+                <img src="{% static 'images/product_placeholder.jpg' %}" alt="Wooden Crafts" class="category-item-image">
+                <span class="handmade-tag">Handmade</span>
+                <div class="category-info">
+                    <h3>Wooden Crafts</h3>
+                </div>
+            </a>
+            <a href="{% url 'product_list' %}?category=clay_ceramics" class="category-item">
+                <img src="{% static 'images/product_placeholder.jpg' %}" alt="Clay & Ceramics" class="category-item-image">
+                <span class="handmade-tag">Handmade</span>
+                <div class="category-info">
+                    <h3>Clay & Ceramics</h3>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section class="container" style="margin-top: var(--spacing-xl);">
+        <h2>Trending Crafts</h2>
+        <div class="product-grid">
+            {% for product in trending_products %}
+            <div class="product-card">
+                <a href="{{ product.get_absolute_url }}" class="product-image-container">
+                    <span class="local-artisan-tag">Local Artisan</span>
+                    {% if product.images.first %}
+                        <img src="{{ product.images.first.image.url }}" alt="{{ product.title }}" class="product-image">
+                    {% else %}
+                        <div class="product-image placeholder">No image</div>
+                    {% endif %}
+                </a>
+                <div class="product-details">
+                    <div>
+                        <h3><a href="{{ product.get_absolute_url }}">{{ product.title }}</a></h3>
+                        <p class="product-price">₹ {{ product.price }}</p>
+                    </div>
+                    <button class="add-to-cart-btn" onclick="window.location.href='{{ product.get_absolute_url }}'">Add to Cart</button>
+                </div>
+            </div>
+            {% empty %}
+            <p>No trending products found.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="artisan-banner">
+        <div class="container artisan-content">
+            <div class="artisan-image-container">
+                <img src="{% static 'images/artisan_banner_crafting.avif' %}" alt="Artisan making pearls" class="artisan-image">
+            </div>
+            <div class="artisan-text">
+                <h2>Empowering Local Creativity</h2>
+                <p>We partner directly with Indian artisans to bring their craft to the world. Every purchase supports fair wages, cultural preservation, and sustainable practices.</p>
+                <a href="{% url 'home' %}" class="btn btn-outline">Explore Artisans</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="container" style="margin-top: var(--spacing-xl);">
+        <h2>Top Artisans</h2>
+        <div class="artisan-card-grid">
+            {% for artisan in top_artisans %}
+          
+                {% if artisan.image %}
+                    <img src="{{ artisan.image.url }}" alt="{{ artisan.display_name }}" class="artisan-card-image">
+                {% else %}
+                    <div class="artisan-card-image placeholder">No Image</div>
+                {% endif %}
+                <p>{{ artisan.display_name }} - {{ artisan.specialty }}</p>
+            
+            {% empty %}
+            <p>No top artisans found.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="container">
+            <h2>What customers say</h2>
+            <div class="review-grid">
+                <div class="review-card">
+                    <div class="reviewer-header">
+                        <img src="{% static 'images/placeholder.jpg' %}" alt="Rohit Avatar" class="reviewer-avatar">
+                        <div class="reviewer-info">
+                            <div class="reviewer-name">Rohit</div>
+                            <div class="rating-stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="review-text">"Beautiful craftsmanship and fast delivery. Loved supporting local!"</p>
+                </div>
+                <div class="review-card">
+                    <div class="reviewer-header">
+                        <img src="{% static 'images/placeholder.jpg' %}" alt="Sneha Avatar" class="reviewer-avatar">
+                        <div class="reviewer-info">
+                            <div class="reviewer-name">Sneha</div>
+                            <div class="rating-stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="review-text">"Packaging felt premium and the product has a story."</p>
+                </div>
+                <div class="review-card">
+                    <div class="reviewer-header">
+                        <img src="{% static 'images/placeholder.jpg' %}" alt="Arjun Avatar" class="reviewer-avatar">
+                        <div class="reviewer-info">
+                            <div class="reviewer-name">Arjun</div>
+                            <div class="rating-stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="review-text">"Authentic, handmade and worth every rupee."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
 {% endblock %}

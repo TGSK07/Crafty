@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Our Story · Crafty{% endblock %}
+
+{% block content %}
+    <section class="hero-section about-hero">
+        <div class="hero-content container">
+            <h1>Handmade with Heart.<br>Crafted for Tomorrow.</h1>
+            <p class="hero-tagline">Connecting India's rich artisanal heritage with a global audience, sustainably and ethically.</p>
+        </div>
+    </section>
+
+    <section class="container info-page-container">
+        <div class="info-card wide-card">
+            <h1>The Crafty Story</h1>
+            
+            <p class="section-lead">
+                Crafty is more than just a marketplace; it's a bridge connecting modern shoppers with the rich heritage and immense talent of local Indian artisans. Our mission is built on transparency, fair trade, and sustainability. We believe in the power of traditional craftsmanship to inspire and enrich lives.
+            </p>
+
+            <div class="mission-grid">
+                <div class="mission-point card-shadow">
+                    <h2>Empowering Artisans</h2>
+                    <p>We believe in fair wages and direct partnerships. By cutting out the middlemen, we ensure that the creators receive the true value of their meticulous work, supporting their families and traditional crafts.</p>
+                </div>
+                <div class="mission-point card-shadow">
+                    <h2>Sustainable & Ethical</h2>
+                    <p>Every product on Crafty is handmade, often using sustainable materials and time-honored techniques. We champion ethical sourcing and environmentally conscious practices from production to delivery.</p>
+                </div>
+                <div class="mission-point card-shadow">
+                    <h2>Bringing Culture Home</h2>
+                    <p>From Madhubani paintings to Block-print fabrics, each item carries a unique regional story. Our goal is to make these cultural treasures accessible to everyone, enriching homes with authentic artistry.</p>
+                </div>
+            </div>
+
+            <hr class="separator large" />
+
+            <h2>Meet the Crafty Founders</h2>
+            <p class="creators-intro">
+                Crafty was conceived and developed as a passion project by us, <strong>3rd Year B.Tech students from Sharda University, Greater Noida.</strong> We combined our love for technology with a vision to support India's vibrant artisan community.
+            </p>
+            <div class="creators-section profile-grid">
+                <div class="creator-profile card-shadow">
+                    <img src="{% static 'images/placeholder.jpg' %}" alt="[Partner Name 1] Profile" class="profile-pic">
+                    <h3>Sonu Kumar</h3>
+                    <p><em>Lead Developer | Data Science Student</em></p>
+                    <p class="university-info">Sharda University</p>
+                </div>
+                <div class="creator-profile card-shadow">
+                    <img src="{% static 'images/placeholder.jpg' %}" alt="[Partner Name 2] Profile" class="profile-pic">
+                    <h3>Hardik Takkar</h3>
+                    <p><em>Data Science Student</em></p>
+                    <p class="university-info">Sharda University</p>
+                </div>
+            </div>
+
+            <div class="university-recognition">
+                <p>We are proud to be students of Sharda University, where we gained the knowledge and support to turn this idea into a reality. This platform is a testament to our learning and commitment to making a positive impact.</p>
+            </div>
+        </div>
+    </section>
+{% endblock %}

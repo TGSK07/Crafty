@@ -1,37 +1,56 @@
 {% extends "base.html" %}
-
 {% block title %}Seller Dashboard — Crafty{% endblock %}
 
 {% block content %}
-  <h1>Seller Dashboard</h1>
+    <section class="container dashboard-container">
+        <h1>Seller Dashboard</h1>
+        <p class="welcome-message">Welcome back, <strong>{{ user.first_name|default:user.username }} !</strong> Let's check on your shop's performance.</p>
 
-  <p>Welcome, {{ user.first_name|default:user.username }}!</p>
+        <div class="dashboard-grid">
+            <section class="dashboard-section stats-area">
+                <h2>Quick Stats 📊</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>{{ products_count|default:"0" }}</h3>
+                        <p class="stat-label">Products Listed</p>
+                    </div>
 
-  <section class="dashboard-section">
-    <h2>Your Actions</h2>
+                    <div class="stat-card">
+                        <h3>{{ orders_count|default:"0" }}</h3>
+                        <p class="stat-label">Orders Received</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>₹{{ total_revenue|default:"0.00" }}</h3>
+                        <p class="stat-label">Total Revenue</p>
+                    </div>
+                </div>
 
-    <ul class="dashboard-links">
-      <li><a href="{% url 'product_create' %}">➕ Add New Product</a></li>
-      <li><a href="{% url 'seller_products' %}">📦 View Your Products</a></li>
-      <li><a href="{% url 'product_list' %}">🛍️ View Market</a></li>
-      <li><a href="{% url 'profile' %}">✏️ Edit Profile</a></li>
-    </ul>
-  </section>
+                <p class="muted-info">More seller analytics will appear here soon.</p>
+            </section>
 
-  <section class="dashboard-section">
-    <h2>Quick Stats</h2>
-    <div class="stats-grid" style="display:flex; gap:12px; align-items:stretch;">
-      <div class="stat-card" style="border:1px solid #eee; padding:12px; border-radius:8px;">
-        <h3>{{ products_count }}</h3>
-        <p>Products listed</p>
-      </div>
-
-      <div class="stat-card" style="border:1px solid #eee; padding:12px; border-radius:8px;">
-        <h3>{{ orders_count }}</h3>
-        <p>Orders received</p>
-      </div>
-    </div>
-
-    <p class="muted">More seller analytics will appear here in later modules.</p>
-  </section>
+            <section class="dashboard-section actions-area">
+                <h2>Quick Actions 🚀</h2>
+                <ul class="dashboard-links">
+                    <li><a href="{% url 'product_create' %}" class="btn btn-primary btn-icon">
+                        ➕ Add New Product
+                    </a></li>
+                    <li><a href="{% url 'seller_products' %}" class="btn btn-outline btn-icon">
+                        📦 View/Manage Products
+                    </a></li>
+                    <li><a href="{% url 'home' %}" class="btn btn-outline btn-icon">
+                        🔔 View New Orders
+                    </a></li>
+                    <hr>
+                    <li><a href="{% url 'profile' %}" class="btn btn-secondary-outline btn-icon">
+                        ✏️ Edit Profile & Shop Info
+                    </a></li>
+                    <li><a href="{% url 'product_list' %}" class="btn btn-secondary-outline btn-icon">
+                        🛍️ View Customer Market
+                    </a></li>
+                </ul>
+            </section>
+        </div>
+    </section>
 {% endblock %}

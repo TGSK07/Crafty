@@ -1,123 +1,83 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ product.title }} · Crafty{% endblock %}
+
 {% block content %}
-<article>
-  <h1>{{ product.title }}</h1>
+    <section class="container product-detail-container">
+        <article class="product-detail-layout">
+            
+            <div class="product-gallery-area">
+                <div class="gallery">
+                    {% for img in images %}
+                        <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}" class="main-product-image">
+                    {% empty %}
+                        <div class="image-placeholder">No images available</div>
+                    {% endfor %}
+                </div>
+                {% if images|length > 1 %}
+                    <div class="thumbnail-strip">
+                        </div>
+                {% endif %}
+            </div>
 
-  <!-- Price (INR Decimal) -->
-  <p>₹{{ product.price_inr }}</p>
+            <div class="product-info-area">
+                
+                <h1 class="product-title">{{ product.title }}</h1>
+                
+                <p class="product-price-large">₹{{ product.price }}</p>
 
-  <div class="gallery">
-    {% for img in images %}
-      <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}">
-    {% empty %}
-      <p>No images</p>
-    {% endfor %}
-  </div>
+                <hr class="separator" />
 
-  <div class="description">
-    {{ product.description|linebreaks }}
-  </div>
+                <form id="add-to-cart-form" class="add-to-cart-form" method="post" action="{% url 'add_to_cart' product.pk %}">
+                    {% csrf_token %}
+                    <div class="form-qty-group">
+                        <label for="cart-qty" class="qty-label">Quantity:</label>
+                        
+                        <div class="qty-control">
+                            <button type="button" class="qty-btn qty-minus" data-action="minus" aria-label="Decrease quantity">−</button>
+                            
+                            <input type="number" name="qty" id="cart-qty" value="1" min="1" class="qty-input-large">
+                            
+                            <button type="button" class="qty-btn qty-plus" data-action="plus" aria-label="Increase quantity">+</button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="add-to-cart-btn" class="btn btn-primary btn-full-width">
+                        Add to Cart
+                    </button>
+                </form>
 
-  <!-- Add-to-cart form (AJAX: no redirect) -->
-  <form id="add-to-cart-form" class="add-to-cart-form" method="post" action="{% url 'add_to_cart' product.pk %}">
-    {% csrf_token %}
-    <label>Qty:
-      <input type="number" name="qty" id="cart-qty" value="1" min="1" style="width:72px;">
-    </label>
-    <button type="submit" id="add-to-cart-btn">Add to cart</button>
-  </form>
+                <hr class="separator" />
 
-  <aside class="seller-info">
-    <h3>Seller</h3>
-    {% if seller_profile %}
-      {% if seller_profile.image %}
-        <img src="{{ seller_profile.image.url }}" alt="{{ seller_profile.display_name }}" />
-      {% endif %}
-      <p><strong>{{ seller_profile.display_name }}</strong></p>
-      <p>{{ seller_profile.city }}</p>
-      <p>Contact: {{ seller_profile.contact_number }}</p>
-    {% else %}
-      <p>Seller information not available.</p>
-    {% endif %}
-  </aside>
-</article>
+                <div class="description">
+                    <h2>Product Details</h2>
+                    <div class="product-description-text">
+                        {{ product.description|linebreaks }}
+                    </div>
+                </div>
 
-<!-- Self-contained AJAX add-to-cart script -->
-<script>
-(function () {
-  // local getCookie to avoid dependency issues
-  function getCookie(name) {
-    const v = `; ${document.cookie}`;
-    const parts = v.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return null;
-  }
+                <aside class="seller-info-card">
+                    <h2>Crafted By</h2>
+                    {% if seller_profile %}
+                        <div class="seller-details-flex">
+                            {% if seller_profile.image %}
+                                <img src="{{ seller_profile.image.url }}" alt="{{ seller_profile.display_name }}'s profile" class="seller-avatar" />
+                            {% else %}
+                                <div class="seller-avatar-placeholder">👤</div>
+                            {% endif %}
+                            <div class="seller-text">
+                                <p class="seller-name"><strong>{{ seller_profile.display_name }}</strong></p>
+                                <p class="seller-location">{{ seller_profile.city }}</p>
+                                <p class="seller-contact">Contact: {{ seller_profile.contact_number }}</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Seller information not available.</p>
+                    {% endif %}
+                </aside>
+            </div>
+        </article>
+    </section>
 
-  // Wait for DOM so element exists
-  document.addEventListener('DOMContentLoaded', function () {
-    try {
-      const form = document.getElementById('add-to-cart-form');
-      if (!form) {
-        console.warn('Add-to-cart form not found on page.');
-        return;
-      }
-      const btn = document.getElementById('add-to-cart-btn');
-      const csrftoken = getCookie('csrftoken');
-
-      form.addEventListener('submit', async function (e) {
-        e.preventDefault();              // stop normal redirect submit
-        btn.disabled = true;
-        btn.dataset.origText = btn.textContent;
-
-        const url = form.action;
-        const formData = new FormData(form);
-
-        try {
-          const resp = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-CSRFToken': csrftoken
-            },
-            body: formData
-          });
-
-          console.log('Add-to-cart response status:', resp.status);
-
-          if (!resp.ok) {
-            const txt = await resp.text();
-            console.error('Add to cart failed:', resp.status, txt);
-            alert('Could not add to cart: ' + (txt || resp.status));
-            return;
-          }
-
-          const j = await resp.json();
-          if (j && j.success) {
-            // update navbar badge if available
-            if (typeof window.setCartCount === 'function') {
-              window.setCartCount(j.count || 0);
-            }
-            // quick UX feedback
-            btn.textContent = 'Added ✓';
-            setTimeout(() => btn.textContent = btn.dataset.origText || 'Add to cart', 1200);
-          } else {
-            console.warn('Add-to-cart response JSON:', j);
-            alert('Could not add to cart. See console for details.');
-          }
-        } catch (err) {
-          console.error('Add-to-cart fetch error:', err);
-          alert('Add to cart failed (see console).');
-        } finally {
-          btn.disabled = false;
-        }
-      });
-
-    } catch (outerErr) {
-      console.error('Add-to-cart init error:', outerErr);
-    }
-  });
-})();
-</script>
 
 {% endblock %}

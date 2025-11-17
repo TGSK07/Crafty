@@ -1,99 +1,149 @@
 {% extends "base.html" %}
 {% block title %}Checkout — Crafty{% endblock %}
+
 {% block content %}
-  <h1>Checkout</h1>
+    <section class="container checkout-container">
+        <h1>Final Checkout</h1>
+        
+        <div class="checkout-grid">
+            
+            <div class="order-review-area">
+                <h2>1. Review Your Order</h2>
+                
+                <ul class="checkout-item-list">
+                    {% for it in items %}
+                        <li class="checkout-item">
+                            <span class="item-title">{{ it.product.title }}</span>
+                            <span class="item-qty">Qty: {{ it.quantity }}</span>
+                            <span class="item-total-price">₹{{ it.total }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
 
-  <ul>
-    {% for it in items %}
-      <li>{{ it.product.title }} — Qty: {{ it.quantity }} — ₹{{ it.total }}</li>
-    {% endfor %}
-  </ul>
-  <p><strong>Total: ₹{{ total }}</strong></p>
+                <hr class="form-separator" />
+                
+                <div class="shipping-address-placeholder">
+                    <h2>2. Shipping & Contact Info</h2>
+                    <div class="placeholder-form-fields">
+                         <div class="form-group"><label>Address Line 1</label><input type="text" value="123 Artisan Street" disabled></div>
+                         <div class="form-group"><label>City</label><input type="text" value="Craftsville" disabled></div>
+                    </div>
+                </div>
+            </div>
 
-  <button id="pay-now">Pay with Razorpay</button>
+            <div class="payment-summary-area">
+                <div class="summary-card payment-card">
+                    <h2>Order Summary</h2>
+                    
+                    <div class="summary-line">
+                        <span>Subtotal ({{ items|length }} items):</span>
+                        <span class="price-value">₹{{ total }}</span>
+                    </div>
+                    <div class="summary-line shipping-line">
+                        <span>Shipping Fee:</span>
+                        <span class="price-value">₹49</span> </div>
+                    
+                    <hr class="summary-separator">
 
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <script>
-    // read cookie helper (Django-style)
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    }
+                    <div class="summary-line grand-total-line">
+                        <strong>Grand Total:</strong>
+                        <strong class="price-value final-total">₹{{ total | add:49 }}</strong>
+                    </div>
 
-    document.getElementById('pay-now').addEventListener('click', async function () {
-      try {
-        const csrftoken = getCookie('csrftoken');
+                    <button id="pay-now" class="btn btn-primary checkout-btn btn-full-width">
+                        Pay ₹{{ total | add:49 }} Now (Razorpay)
+                    </button>
+                    
+                    <p class="payment-note text-muted">
+                        Secure payments processed via Razorpay.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        // create Razorpay order on server
-        const createResp = await fetch("{% url 'checkout' %}", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrftoken
-          },
-          body: JSON.stringify({}) // no body needed; server uses session
-        });
+      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    // read cookie helper (Django-style)
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
 
-        if (!createResp.ok) {
-          const txt = await createResp.text();
-          alert("Could not create order: " + txt);
-          return;
-        }
+    document.getElementById('pay-now').addEventListener('click', async function () {
+      try {
+        const csrftoken = getCookie('csrftoken');
 
-        const data = await createResp.json();
+        // create Razorpay order on server
+        const createResp = await fetch("{% url 'checkout' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+          },
+          body: JSON.stringify({}) // no body needed; server uses session
+        });
 
-        const options = {
-          key: data.razorpay_key_id,
-          amount: data.amount_paise, // in paise
-          currency: data.currency,
-          name: "Crafty",
-          description: `Order #${data.order_id}`,
-          order_id: data.razorpay_order_id,
-          handler: function (response) {
-            // verify payment on server
-            fetch("{% url 'verify_payment' %}", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken
-              },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                order_id: data.order_id
-              })
-            })
-            .then(r => r.json())
-            .then(res => {
-              if (res.status === "ok") {
-                alert("Payment successful — Order #" + res.order_id);
-                window.location.href = "{% url 'product_list' %}";
-              } else {
-                alert("Payment verification failed. See console for details.");
-                console.error(res);
-              }
-            })
-            .catch(err => {
-              alert("Error verifying payment. Check console.");
-              console.error(err);
-            });
-          },
-          prefill: {
-            name: "{{ request.user.get_full_name|default:request.user.username }}",
-            email: "{{ request.user.email }}"
-          },
-          theme: { color: "#0ea5a5" }
-        };
+        if (!createResp.ok) {
+          const txt = await createResp.text();
+          alert("Could not create order: " + txt);
+          return;
+        }
 
-        const rzp = new Razorpay(options);
-        rzp.open();
+        const data = await createResp.json();
 
-      } catch (err) {
-        console.error("Checkout error:", err);
-        alert("Checkout failed. See console.");
-      }
-    });
-  </script>
+        const options = {
+          key: data.razorpay_key_id,
+          amount: data.amount_paise, // in paise
+          currency: data.currency,
+          name: "Crafty",
+          description: `Order #${data.order_id}`,
+          order_id: data.razorpay_order_id,
+          handler: function (response) {
+            // verify payment on server
+            fetch("{% url 'verify_payment' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken
+              },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                order_id: data.order_id
+              })
+            })
+            .then(r => r.json())
+            .then(res => {
+              if (res.status === "ok") {
+                alert("Payment successful — Order #" + res.order_id);
+                window.location.href = "{% url 'product_list' %}";
+              } else {
+                alert("Payment verification failed. See console for details.");
+                console.error(res);
+              }
+            })
+            .catch(err => {
+              alert("Error verifying payment. Check console.");
+              console.error(err);
+            });
+          },
+          prefill: {
+            name: "{{ request.user.get_full_name|default:request.user.username }}",
+            email: "{{ request.user.email }}"
+          },
+          theme: { color: "#378e9b" } /* Adjusted to var(--color-primary) tone */
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+      } catch (err) {
+        console.error("Checkout error:", err);
+        alert("Checkout failed. See console.");
+      }
+    });
+  </script>
 {% endblock %}

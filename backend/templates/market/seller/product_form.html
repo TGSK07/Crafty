@@ -1,67 +1,118 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{% if product %}Edit{% else %}Create{% endif %} Product · Crafty{% endblock %}
+
 {% block content %}
-<h1>{% if product %}Edit{% else %}Create{% endif %} Product</h1>
+    <section class="container form-page-container">
+        <div class="product-form-card">
+            <h1>{% if product %}Edit{% else %}Create{% endif %} Product</h1>
+            <p class="form-description">
+                Use this form to manage the details and images for your handcrafted item.
+            </p>
 
-<!-- MAIN PRODUCT FORM (no nested forms inside) -->
-<form id="product-main-form" method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.non_field_errors }}
-  <div>{{ form.title.label_tag }} {{ form.title }}</div>
-  <div>{{ form.category.label_tag }} {{ form.category }}</div>
-  <div>{{ form.description.label_tag }} {{ form.description }}</div>
-  <div>{{ form.price.label_tag }} {{ form.price }} <small>enter amount in paise (e.g. 10000 = ₹100)</small></div>
-  <div>{{ form.stock.label_tag }} {{ form.stock }}</div>
-  <div>{{ form.is_active.label_tag }} {{ form.is_active }}</div>
+            <form id="product-main-form" method="post" enctype="multipart/form-data" class="modern-form">
+                {% csrf_token %}
 
-  <hr />
-  <div>
-    <label for="id_images">Product Images (you can select multiple)</label><br>
-    <input type="file" id="id_images" name="images" multiple accept="image/*">
-    <p><small>Allowed types: jpg, jpeg, png, webp. Max 4MB each.</small></p>
-  </div>
+                {% if form.non_field_errors %}
+                    <div class="error-list form-non-field-errors">
+                        {% for error in form.non_field_errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-  <div id="preview" style="display:flex; gap: 8px; margin-top: 8px;"></div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        {{ form.title.label_tag }}
+                        {{ form.title }}
+                        {% if form.title.errors %}<div class="field-error">{{ form.title.errors }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.category.label_tag }}
+                        {{ form.category }}
+                        {% if form.category.errors %}<div class="field-error">{{ form.category.errors }}</div>{% endif %}
+                    </div>
+                </div>
 
-  <button type="submit" id="save-product-btn">Save</button>
-</form>
-<!-- END MAIN PRODUCT FORM -->
+                <div class="form-group full-width">
+                    {{ form.description.label_tag }}
+                    {{ form.description }}
+                    {% if form.description.errors %}<div class="field-error">{{ form.description.errors }}</div>{% endif %}
+                </div>
 
-<!-- EXISTING IMAGES SECTION (outside main form) -->
-{% if product and product.images.all %}
-  <h4>Existing Images</h4>
-  <div class="existing-images" style="display:flex; gap:12px; flex-wrap:wrap;">
-    {% for img in product.images.all %}
-      <div class="img-item" style="text-align:center; border:1px solid #eee; padding:6px;">
-        <img src="{{ img.image.url }}" alt="{{ img.alt_text }}" style="max-width:160px; display:block; object-fit:cover; height:120px;">
-        <!-- Separate form for deletion (not nested) -->
-        <form method="post" action="{% url 'product_image_delete' img.pk %}" style="margin-top:6px;">
-          {% csrf_token %}
-          <button type="submit" onclick="return confirm('Remove this image?');">Remove</button>
-        </form>
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
+                <div class="form-grid">
+                    <div class="form-group">
+                        {{ form.price.label_tag }}
+                        {{ form.price }} 
+                        <small class="text-muted">Enter amount in paise (e.g., 10000 = ₹100)</small>
+                        {% if form.price.errors %}<div class="field-error">{{ form.price.errors }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.stock.label_tag }}
+                        {{ form.stock }}
+                        {% if form.stock.errors %}<div class="field-error">{{ form.stock.errors }}</div>{% endif %}
+                    </div>
+                </div>
 
-<script>
-  // simple client-side preview for chosen images
-  const input = document.getElementById('id_images');
-  const preview = document.getElementById('preview');
-  if (input) {
-    input.addEventListener('change', (e) => {
-      preview.innerHTML = '';
-      const files = Array.from(e.target.files).slice(0, 6); // limit previews
-      files.forEach(file => {
-        const url = URL.createObjectURL(file);
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.maxWidth = '120px';
-        img.style.maxHeight = '120px';
-        img.style.objectFit = 'cover';
-        preview.appendChild(img);
-      });
-    });
-  }
-</script>
+                <div class="form-group status-group">
+                    {{ form.is_active }}
+                    {{ form.is_active.label_tag }}
+                    <small class="text-muted">Uncheck to hide the product from the public market.</small>
+                    {% if form.is_active.errors %}<div class="field-error">{{ form.is_active.errors }}</div>{% endif %}
+                </div>
+
+                <hr class="form-separator" />
+                
+                <div class="form-group full-width image-upload-group">
+                    <label for="id_images">Product Images (Upload up to 6 new images)</label>
+                    <input type="file" id="id_images" name="images" multiple accept="image/*" class="file-input">
+                    <p class="text-muted"><small>Allowed types: jpg, png, webp. Max 4MB each.</small></p>
+                    <div id="preview" class="image-preview-area"></div>
+                </div>
+                
+                <button type="submit" id="save-product-btn" class="btn btn-primary btn-full-width">
+                    {% if product %}Save Changes{% else %}Create Product{% endif %}
+                </button>
+            </form>
+            {% if product and product.images.all %}
+                <h2 class="existing-images-title">Existing Images ({{ product.images.all|length }})</h2>
+                <div class="existing-images-grid">
+                    {% for img in product.images.all %}
+                        <div class="img-item-card">
+                            <img src="{{ img.image.url }}" alt="{{ img.alt_text }}" class="existing-image-thumb">
+                            <form method="post" action="{% url 'product_image_delete' img.pk %}" class="image-delete-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-error" onclick="return confirm('Remove this image?');">
+                                    Remove
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+        </div>
+    </section>
+
+    <script>
+        // simple client-side preview for chosen images
+        const input = document.getElementById('id_images');
+        const preview = document.getElementById('preview');
+        if (input) {
+            input.addEventListener('change', (e) => {
+                preview.innerHTML = '';
+                const files = Array.from(e.target.files).slice(0, 6); // limit previews
+                files.forEach(file => {
+                    const url = URL.createObjectURL(file);
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = 'New image preview';
+                    img.classList.add('new-image-preview-thumb');
+                    preview.appendChild(img);
+                });
+            });
+        }
+    </script>
 {% endblock %}

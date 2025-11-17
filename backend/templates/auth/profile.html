@@ -1,9 +1,59 @@
 {% extends "base.html" %}
-{% block title %}Profile — Crafty{% endblock %}
+{% load static %}
+{% block title %}Your Profile — Crafty{% endblock %}
+
 {% block content %}
-  <h2>Your Profile</h2>
-  <p><strong>Username:</strong> {{ user.username }}</p>
-  <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
-  <p><strong>Email:</strong> {{ user.email }}</p>
-  <p><strong>Type:</strong> {{ user.get_user_type_display }}</p>
+    <section class="container profile-container">
+        <div class="profile-card">
+            <h2>Your Profile</h2>
+
+            <div class="profile-header">
+                <div class="profile-image-wrapper">
+                    {% if user.profile_image %}
+                        <img src="{{ user.profile_image.url }}" alt="{{ user.username }}'s profile picture" class="profile-image">
+                    {% else %}
+                        <div class="profile-image-placeholder">
+                            <span style="font-size: 3rem;">&#128100;</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <a href="{% url 'home' %}" class="btn btn-primary edit-btn">
+                    Edit Profile
+                </a>
+            </div>
+
+            <div class="profile-details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Username:</span>
+                    <span class="detail-value">{{ user.username }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">{{ user.first_name }} {{ user.last_name }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{ user.email }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Account Type:</span>
+                    <span class="detail-value account-type-{{ user.user_type }}">
+                        {{ user.get_user_type_display }}
+                    </span>
+                </div>
+            </div>
+
+            {% if user.user_type == 'seller' %}
+                <div class="seller-cta">
+                    <p>Manage your products and orders:</p>
+                    <a href="{% url 'seller_dashboard' %}" class="btn btn-outline">Go to Seller Dashboard</a>
+                </div>
+            {% endif %}
+
+        </div>
+    </section>
 {% endblock %}

@@ -1,27 +1,74 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 {% block title %}Sign Up — Crafty{% endblock %}
 
 {% block content %}
-  <h2>Create an account</h2>
+    <section class="auth-container">
+        <div class="auth-card">
+            <h2>Create a Crafty Account</h2>
 
-  {% if form.errors %}
-    <div class="error-list">
-      {{ form.errors }}
-    </div>
-  {% endif %}
+            <form method="post" novalidate class="auth-form">
+                {% csrf_token %}
 
-  <form method="post" novalidate>
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div>{{ form.username.label_tag }} {{ form.username }}</div>
-    <div>{{ form.first_name.label_tag }} {{ form.first_name }}</div>
-    <div>{{ form.last_name.label_tag }} {{ form.last_name }}</div>
-    <div>{{ form.email.label_tag }} {{ form.email }}</div>
-    <div>{{ form.user_type.label_tag }} {{ form.user_type }}</div>
-    <div>{{ form.password1.label_tag }} {{ form.password1 }}</div>
-    <div>{{ form.password2.label_tag }} {{ form.password2 }}</div>
-    <button type="submit">Sign up</button>
-  </form>
+                {% if form.non_field_errors %}
+                    <div class="error-list">
+                        {% for error in form.non_field_errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-  <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+                <div class="form-group">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                    {% if form.username.errors %}<div class="field-error">{{ form.username.errors }}</div>{% endif %}
+                </div>
+
+                <div class="form-group form-group-inline">
+                    <div class="inline-field">
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}<div class="field-error">{{ form.first_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="inline-field">
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}<div class="field-error">{{ form.last_name.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    {{ form.email.label_tag }}
+                    {{ form.email }}
+                    {% if form.email.errors %}<div class="field-error">{{ form.email.errors }}</div>{% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.user_type.label_tag }}
+                    {{ form.user_type }}
+                    <small class="text-muted">Choose 'Seller' if you are an artisan or shop owner.</small>
+                    {% if form.user_type.errors %}<div class="field-error">{{ form.user_type.errors }}</div>{% endif %}
+                </div>
+
+                <hr style="border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 0;">
+                
+                <div class="form-group">
+                    {{ form.password1.label_tag }}
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}<div class="field-error">{{ form.password1.errors }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.password2.label_tag }}
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}<div class="field-error">{{ form.password2.errors }}</div>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full-width">Sign up</button>
+            </form>
+
+            <p class="auth-footer-link">
+                Already have an account? <a href="{% url 'login' %}" class="text-primary">Log in</a>
+            </p>
+        </div>
+    </section>
 {% endblock %}
