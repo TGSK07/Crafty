@@ -1,20 +1,25 @@
 from django.shortcuts import render, get_list_or_404, redirect, get_object_or_404
 from django.views import View
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Product, ProductImage, ArtistProfile
 from .forms import ProductForm, ProductImageForm
 from django.contrib import messages
+from django.conf import settings
 from django.db import transaction
 from django.contrib.auth import get_user_model
 
 from django.views.decorators.http import require_POST
+from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from django.http import HttpResponseForbidden
+from django.views.generic import TemplateView
 
 from django.http import Http404
 from django.db.models.query import QuerySet
 
+from django.db import models
+from .models import Product, ProductImage, ArtistProfile, Category
 
 ALLOWED_IMAGE_CONTENT_TYPES = ("image/png", "image/jpeg", "image/jpg", "image/webp")
 MAX_IMAGE_SIZE = 2 * 1024 * 1024
@@ -30,6 +35,107 @@ def validate_image_file(f):
 
 
 # Create your views here.
+PAGE_CACHE_TTL  = getattr(settings, "HOME_CACHE_TTL", 30)  # seconds (set to e.g. 60 in dev, 300+ in prod)
+
+@method_decorator(cache_page(PAGE_CACHE_TTL ), name="dispatch")
+class HomeView(TemplateView):
+    template_name = "home.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        # Featured products (explicitly flagged) fallback to latest if none
+        featured_qs = Product.objects.filter(is_active=True).order_by("-created_at")
+        if not featured_qs.exists():
+            featured_qs = Product.objects.filter(is_active=True).order_by("-created_at")
+
+        # Latest products (limit)
+        latest_qs = Product.objects.filter(is_active=True).order_by("-created_at")
+
+        # Top artisans: ArtistProfile with product counts (prefetch/products)
+        artisans_qs = ArtistProfile.objects.select_related("user").annotate(
+            product_count=models.Count("user__products")
+        ).order_by("-product_count", "-id")
+
+        # Optimize product queries: select_related for seller & category, prefetch images
+        featured_products = featured_qs.select_related("seller", "category").prefetch_related("images")[:6]
+        latest_products = latest_qs.select_related("seller", "category").prefetch_related("images")[:8]
+        top_artisans = artisans_qs[:6]
+
+        # Optional: paginate latest products on homepage (example)
+        page = self.request.GET.get("page", 1)
+        paginator = Paginator(latest_products, 6)
+        try:
+            latest_page = paginator.page(page)
+        except PageNotAnInteger:
+            latest_page = paginator.page(1)
+        except EmptyPage:
+            latest_page = paginator.page(paginator.num_pages)
+
+        ctx.update({
+            "featured_products": featured_products,
+            "trending_products": latest_page,      # page object (iterable)
+            "top_artisans": top_artisans,
+            # helpful meta for SEO / template
+            "meta_title": "Crafty — Handmade by Local Artisans",
+            "meta_description": "Discover and buy authentic handmade products from local artisans.",
+        })
+        return ctx
+    
+
+@method_decorator(cache_page(PAGE_CACHE_TTL), name="dispatch")
+class AboutView(TemplateView):
+    template_name = "static/about.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            "meta_title": "About — Crafty",
+            "meta_description": "Learn about Crafty — mission, values and how we support local artisans.",
+            # extra context values you might want in template
+            "founding_year": 2024,
+            "mission": "To connect local artisans with customers who value handmade, sustainable goods."
+        })
+        return ctx
+
+
+@method_decorator(cache_page(PAGE_CACHE_TTL), name="dispatch")
+class HelpCenterView(TemplateView):
+    template_name = "static/help_center.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            "meta_title": "Help Center — Crafty",
+            "meta_description": "Find FAQs, guides and contact info for support at Crafty.",
+            "faqs": [
+                {"q": "How do I place an order?", "a": "Add items to cart, checkout with Razorpay and you'll receive an order confirmation."},
+                {"q": "Can I cancel an order?", "a": "Cancellations depend on order status and seller policies. Contact support with your order id."},
+                {"q": "How do I become a seller?", "a": "Sign up and select seller account type, then complete your profile and create listings."},
+            ]
+        })
+        return ctx
+
+
+@method_decorator(cache_page(PAGE_CACHE_TTL), name="dispatch")
+class ShippingView(TemplateView):
+    template_name = "static/shipping.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            "meta_title": "Shipping & Delivery — Crafty",
+            "meta_description": "Shipping policies, delivery timelines and costs for Crafty orders.",
+            "shipping_policies": [
+                {"title": "Domestic Shipping", "text": "Standard delivery 3-7 business days depending on location and seller."},
+                {"title": "Shipping Charges", "text": "Each seller sets shipping charges per product. You will see shipping at checkout."},
+                {"title": "International Shipping", "text": "International shipping availability depends on the seller — check product listing."},
+            ],
+            "contact_email": getattr(settings, "SUPPORT_EMAIL", "support@crafty.example")
+        })
+        return ctx
+    
+
 class ProductListView(View):
     def get(self, request):
         q = request.GET.get("q", "")
