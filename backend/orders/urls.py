@@ -13,10 +13,10 @@ urlpatterns = [
     
     # buyer
     path("my/", BuyerOrderListView.as_view(), name="buyer_order_list"),
-    path("<int:pk/>", BuyerOrderDeatilView.as_view(), name="buyer_order_detail"),
+    path("view/<int:pk>/", BuyerOrderDeatilView.as_view(), name="buyer_order_detail"),
 
     # seller
     path("seller/", SellerOrderListView.as_view(), name="seller_order_list"),
-    path("seller/<int:pk>/", SellerOrderDeatilView.as_view(), name="seller_order_detail"),
+    path("seller/view/<int:pk>/", SellerOrderDeatilView.as_view(), name="seller_order_detail"),
     path("selelr/<int:pk>/update-status", SellerOrderStatusUpdateView.as_view(), name="seller_order_update_status"),
 ]
