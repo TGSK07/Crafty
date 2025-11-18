@@ -18,7 +18,8 @@
                     {% endif %}
                 </div>
 
-                <a href="{% url 'home' %}" class="btn btn-primary edit-btn">
+                <!-- NOTE: Assuming profile_edit is the correct URL for editing -->
+                <a href="{% url 'profile' %}" class="btn btn-primary edit-btn">
                     Edit Profile
                 </a>
             </div>
@@ -46,11 +47,19 @@
                     </span>
                 </div>
             </div>
+            
+            <!-- --- Conditional Action Section --- -->
 
             {% if user.user_type == 'seller' %}
-                <div class="seller-cta">
-                    <p>Manage your products and orders:</p>
-                    <a href="{% url 'seller_dashboard' %}" class="btn btn-outline">Go to Seller Dashboard</a>
+                <!-- Action for Sellers -->
+                <div class="seller-cta cta-box">
+                    <p>Manage your products and sales:</p>
+                    <a href="{% url 'seller_dashboard' %}" class="btn btn-primary">Go to Seller Dashboard</a>
+                </div>
+            {% else %}
+                <!-- Action for Buyers (or standard users) -->
+                <div class="buyer-cta cta-box">
+                    <a href="{% url 'buyer_order_list' %}" class="btn btn-primary">View My Orders</a>
                 </div>
             {% endif %}
 
