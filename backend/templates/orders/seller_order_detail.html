@@ -1,66 +1,167 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Seller view: Order #{{ order.pk }}{% endblock %}
+
 {% block content %}
-<h1>Seller view — Order #{{ order.pk }}</h1>
-<p>Buyer: {{ order.buyer }}</p>
-<p>Status: <span id="order-status">{{ order.get_status_display }}</span></p>
+    <section class="container order-detail-container seller-view">
+        <header class="order-header-seller">
+            <h1>Seller View &mdash; Order #{{ order.pk }}</h1>
+            <p class="order-placed-date">Placed: {{ order.created_at|date:"M d, Y, h:i A" }}</p>
+        </header>
 
-<h3>Your items in this order</h3>
-<table>
-  <thead><tr><th>Product</th><th>Unit</th><th>Qty</th><th>Line total</th></tr></thead>
-  <tbody>
-    {% for item in order.items.all %}
-      {% if item.product and item.product.seller == user %}
-        <tr>
-          <td><a href="{{ item.product.get_absolute_url }}">{{ item.product.title }}</a></td>
-          <td>₹{{ item.unit_price_inr }}</td>
-          <td>{{ item.quantity }}</td>
-          <td>₹{{ item.get_total_inr }}</td>
-        </tr>
-      {% endif %}
-    {% endfor %}
-  </tbody>
-</table>
+        <div class="order-grid">
+            
+            <!-- Left Column: Items Sold -->
+            <div class="order-items-card info-card">
+                <h3>Your Items in this Order</h3>
+                
+                <table class="styled-table order-items-table">
+                    <thead>
+                        <tr>
+                            <th class="col-product-detail">Product</th>
+                            <th class="col-price-detail text-right">Unit Price</th>
+                            <th class="col-qty-detail text-center">Qty</th>
+                            <th class="col-line-total-detail text-right">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                            {% if item.product and item.product.seller == user %}
+                                <tr class="order-item-row">
+                                    <td class="product-info-cell">
+                                        <div class="product-detail-flex">
+                                            <!-- Product Image: Fixed 60x60 Size -->
+                                            <a href="{% url 'product_edit' item.product.pk %}" class="product-thumb-link-fixed" title="View/Edit Product">
+                                                {% if item.product.images.first %}
+                                                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.title }}" class="product-thumb-small fixed-size-thumb">
+                                                {% else %}
+                                                    <div class="product-thumb-placeholder-small fixed-size-thumb"></div>
+                                                {% endif %}
+                                            </a>
+                                            <div class="product-title-details">
+                                                <a href="{% url 'product_edit' item.product.pk %}" class="product-title-link" title="Edit Product">{{ item.product.title }}</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="price-cell text-right">₹{{ item.unit_price_inr }}</td>
+                                    <td class="qty-cell text-center">{{ item.quantity }}</td>
+                                    <td class="total-cell text-right font-semibold">₹{{ item.get_total }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="final-order-summary">
+                    <div class="summary-line grand-total-line">
+                        <strong>Total Revenue from this Order:</strong>
+                        <strong class="total-price-value">₹{{ order.total_amount_inr }}</strong> 
+                        <!-- Assuming context passes seller_total_inr -->
+                    </div>
+                </div>
+            </div>
 
-<form id="status-form" method="post" action="{% url 'seller_order_update_status' order.pk %}">
-  {% csrf_token %}
-  <label>Update status:
-    <select name="status">
-      <option value="processing">Processing</option>
-      <option value="shipped">Shipped</option>
-      <option value="delivered">Delivered</option>
-      <option value="cancelled">Cancelled</option>
-    </select>
-  </label>
-  <button type="submit">Update</button>
-</form>
+            <!-- Right Column: Buyer Info and Status Update -->
+            <div class="order-meta-card">
+                
+                <div class="status-update-card info-card">
+                    <h3>Current Status</h3>
+                    <div class="current-status-display status-{{ order.status }}">
+                        <span id="order-status">{{ order.get_status_display }}</span>
+                    </div>
+
+                    <!-- Status Update Form -->
+                    <form id="status-form" method="post" action="{% url 'seller_order_update_status' order.pk %}" class="modern-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="status-select">Change Status:</label>
+                            <select name="status" id="status-select" class="form-select">
+                                <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>Processing</option>
+                                <option value="shipped" {% if order.status == 'shipped' %}selected{% endif %}>Shipped</option>
+                                <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full-width">Update Status</button>
+                    </form>
+                </div>
+
+                <!-- Buyer & Shipping Info -->
+                <div class="buyer-info-card info-card">
+                    <h3>Buyer & Shipping</h3>
+                    <p><strong>Buyer Name:</strong> {{ order.buyer.get_full_name|default:order.buyer.username }}</p>
+                    <p><strong>Shipping To:</strong></p>
+                    <address class="shipping-address">
+                        {{ order.shipping_address_line1|default:"123 Sample Lane" }}<br>
+                        {{ order.shipping_city|default:"Craftsville" }}, {{ order.shipping_zip|default:"000000" }}
+                    </address>
+                </div>
+                
+            </div>
+        </div>
+    </section>
 
 <script>
 document.getElementById('status-form').addEventListener('submit', async function(e){
-  e.preventDefault();
-  const form = e.target;
-  const fd = new FormData(form);
-  const csrftoken = document.cookie.split('csrftoken=')[1]?.split(';')[0];
-  try {
-    const resp = await fetch(form.action, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': csrftoken,
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: fd
-    });
-    const j = await resp.json();
-    if (j.ok) {
-      document.getElementById('order-status').textContent = j.status;
-      alert('Status updated');
-    } else {
-      alert('Could not update status');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Error updating status');
-  }
+  e.preventDefault();
+  
+  const form = e.target;
+  const statusDisplay = document.getElementById('order-status');
+  const updateButton = form.querySelector('button[type="submit"]');
+
+  const fd = new FormData(form);
+  // Simple cookie reader (relying on base.html setup for getCookie if available)
+  const getCookie = name => {
+    const v = `; ${document.cookie}`;
+    const parts = v.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  };
+  const csrftoken = getCookie('csrftoken');
+  
+  if (updateButton) {
+    updateButton.disabled = true;
+    updateButton.textContent = 'Saving...';
+  }
+
+  try {
+    const resp = await fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: fd
+    });
+    
+    const j = await resp.json();
+    
+    if (j.ok) {
+        // Update text display (optional, as we are redirecting)
+        statusDisplay.textContent = j.status_display; 
+        
+        // Update visual tag (optional, as we are redirecting)
+        const currentStatusClass = statusDisplay.className.match(/status-(\w+)/)?.[0];
+        if (currentStatusClass) {
+            statusDisplay.classList.remove(currentStatusClass);
+        }
+        statusDisplay.classList.add(`status-${j.status_value}`);
+        
+        // --- CRITICAL CHANGE: Redirect to seller order list ---
+        window.location.href = "{% url 'seller_order_list' %}";
+
+    } else {
+        alert('Could not update status: ' + (j.error || 'Server error.'));
+    }
+  } catch (err) {
+    console.error('AJAX Error:', err);
+    alert('Network error during status update.');
+  } finally {
+    if (updateButton) {
+      updateButton.disabled = false;
+      updateButton.textContent = 'Update Status';
+    }
+  }
 });
 </script>
 {% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Order #{{ order.pk }} — Crafty{% endblock %}
+
+{% block content %}
+    <section class="container order-detail-container">
+        <h1>Order Details <span class="order-id-label">#{{ order.pk }}</span></h1>
+        
+        <div class="order-summary-header">
+            <div class="order-status-tag status-{{ order.status }}">
+                Status: {{ order.get_status_display }}
+            </div>
+            <div class="order-placed-date">
+                Placed: {{ order.created_at|date:"M d, Y, h:i A" }}
+            </div>
+            <div class="order-total-amount">
+                Total Paid: <span class="final-total-price">₹{{ order.total_amount_inr }}</span>
+            </div>
+        </div>
+        
+        <hr class="section-separator" />
+
+        <div class="order-grid">
+            
+            <div class="order-items-card info-card">
+                <h3>Items Purchased</h3>
+                
+                <table class="styled-table order-items-table">
+                    <thead>
+                        <tr>
+                            <th class="col-product-detail">Product</th>
+                            <th class="col-price-detail text-right">Unit Price</th>
+                            <th class="col-qty-detail text-center">Qty</th>
+                            <th class="col-line-total-detail text-right">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                            <tr class="order-item-row">
+                                <td class="product-info-cell">
+                                    <div class="product-detail-flex">
+                                        <a href="{{ item.product.get_absolute_url }}" class="product-thumb-link">
+                                            {% if item.product.images.first %}
+                                                <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.title }}" class="product-thumb-small">
+                                            {% else %}
+                                                <div class="product-thumb-placeholder-small"></div>
+                                            {% endif %}
+                                        </a>
+                                        <div class="product-title-details">
+                                            <a href="{{ item.product.get_absolute_url }}" class="product-title-link">
+                                                {{ item.product.title }}
+                                            </a>
+                                            <span class="product-seller-info">Sold by {{ item.product.seller.username|default:"Artisan" }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                                <td class="price-cell text-right">₹{{ item.unit_price_inr }}</td>
+                                <td class="qty-cell text-center">{{ item.quantity }}</td>
+                                <td class="total-cell text-right font-semibold">₹{{ item.get_total_inr }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="final-order-summary">
+                    <div class="summary-line grand-total-line">
+                        <strong>Order Total:</strong>
+                        <strong class="total-price-value">₹{{ order.total_amount_inr }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-meta-card">
+                
+                <div class="payment-info-card info-card">
+                    <h3>Payment Details</h3>
+                    {% for p in order.payments.all %}
+                        <div class="payment-detail-line">
+                            <span class="detail-label">Payment ID:</span>
+                            <span class="detail-value payment-id">{{ p.razorpay_payment_id }}</span>
+                        </div>
+                        <div class="payment-detail-line">
+                            <span class="detail-label">Amount Paid:</span>
+                            <span class="detail-value">₹{{ p.amount_inr }}</span>
+                        </div>
+                        <div class="payment-detail-line">
+                            <span class="detail-label">Date:</span>
+                            <span class="detail-value">{{ p.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No payment records found.</p>
+                    {% endfor %}
+                </div>
+                
+                <div class="shipping-info-card info-card">
+                    <h3>Shipping Address</h3>
+                    <p>
+                        <strong>{{ order.shipping_name|default:user.get_full_name }}</strong><br>
+                        {{ order.shipping_address_line1|default:"123 Sample Lane" }}<br>
+                        {{ order.shipping_city|default:"Craftsville" }}, {{ order.shipping_zip|default:"000000" }}
+                    </p>
+                    <p class="text-muted small">Tracking: Awaiting shipment</p>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+{% endblock %}

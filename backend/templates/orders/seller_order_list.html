@@ -1,17 +1,96 @@
 {% extends "base.html" %}
 {% block title %}Seller Orders — Crafty{% endblock %}
+
 {% block content %}
-<h1>Orders containing your products</h1>
-{% if orders %}
-  <ul>
-    {% for order in orders %}
-      <li>
-        <a href="{% url 'seller_order_detail' order.pk %}">Order #{{ order.pk }}</a>
-        — Total: ₹{{ order.total_amount_inr }} — {{ order.get_status_display }} — {{ order.created_at }}
-      </li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p>No orders include your products yet.</p>
-{% endif %}
+    <section class="container order-list-container">
+        <h1>Orders Containing Your Products</h1>
+        <p class="section-description">Quickly review new orders and manage shipment status.</p>
+
+        <!-- Filter and Search Area (Top Card) -->
+        <form method="get" class="order-filter-form card-shadow">
+            <div class="filter-controls-grid">
+                
+                <div class="form-group filter-group">
+                    <label for="status-filter">Status</label>
+                    <select name="status" id="status-filter" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>Processing</option>
+                        <option value="shipped" {% if request.GET.status == 'shipped' %}selected{% endif %}>Shipped</option>
+                        <option value="delivered" {% if request.GET.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                        <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                
+                <div class="form-group filter-group">
+                    <label for="order-ref">Order ID</label>
+                    <input type="search" name="q" id="order-ref" placeholder="Enter #ID" value="{{ request.GET.q }}" class="form-input">
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary search-btn">Search</button>
+                    <a href="{% url 'seller_order_list' %}" class="btn btn-outline clear-btn text-center">Clear</a>
+                </div>
+            </div>
+        </form>
+        
+        {% if orders %}
+            <!-- Table Header -->
+            <div class="order-list-header">
+                <span class="header-col-id">Order ID / Date</span>
+                <span class="header-col-total">Your Revenue</span>
+                <span class="header-col-status text-center">Status</span>
+                <span class="header-col-actions">Manage</span>
+            </div>
+
+            <!-- List of Orders (Styled Rows) -->
+            <div class="order-list-table">
+                {% for order in orders %}
+                    <a href="{% url 'seller_order_detail' order.pk %}" class="order-row-entry card-row-shadow">
+                        
+                        <!-- Col 1: ID & Date -->
+                        <span class="row-col row-id-date">
+                            <span class="order-pk">#{{ order.pk }}</span> 
+                            <span class="order-date">Placed: {{ order.created_at|date:"M d, Y" }}</span>
+                        </span>
+                        
+                        <!-- Col 2: Total Revenue -->
+                        <span class="row-col row-total">
+                            <span class="mobile-label">Revenue:</span>
+                            <strong class="total-price-value total-seller-revenue">₹{{ order.total_amount_inr }}</strong>
+                        </span>
+                        
+                        <!-- Col 3: Status Tag -->
+                        <span class="row-col row-status text-center">
+                            <span class="order-list-status-tag status-{{ order.status }}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </span>
+                        
+                        <!-- Col 4: Action Button (CRITICAL FIX) -->
+                        <span class="row-col row-action action-buttons-group action-right-align">
+                            <span class="btn btn-sm btn-primary btn-view-detail-static">Manage Status</span>
+                            <!-- The anchor tag wraps the whole row, so this acts as the clickable element -->
+                        </span>
+                    </a>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+                <div class="pagination" style="margin-top: var(--spacing-xl); justify-content: center; gap: var(--spacing-md);">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="btn btn-outline">← Prev</a>
+                    {% endif %}
+                    <span style="align-self: center; color: var(--color-text-muted);">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="btn btn-outline">Next →</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <p>No orders currently include your products.</p>
+                <a href="{% url 'product_create' %}" class="btn btn-primary">Add New Product</a>
+            </div>
+        {% endif %}
+    </section>
 {% endblock %}
