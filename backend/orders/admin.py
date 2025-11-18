@@ -30,7 +30,7 @@ class PaymentAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
-    list_display = ("id", "buyer", "total_amount_inr", "status", "razorpay_order_id", "created_at")
-    list_filter = ("status", "created_at")
+    list_display = ("id", "buyer", "total_amount_inr", "status", "razorpay_order_id", "created_at", "updated_at")
+    list_filter = ("status", "created_at", "updated_at")
     search_fields = ("buyer__username", "razorpay_order_id")
-    readonly_fields = ("created_at", )
+    readonly_fields = ("created_at", "updated_at")
