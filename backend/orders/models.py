@@ -9,10 +9,16 @@ User = settings.AUTH_USER_MODEL
 class Order(models.Model):
     STATUS_PENDING = "pending"
     STATUS_PAID = "paid"
+    STATUS_PROCESSING = "processing"
+    STATUS_SHIPPED = "shipped"
+    STATUS_DELIVERED = "delivered"
     STATUS_CANCELLED = "cancelled"
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_PAID, "Paid"),
+        (STATUS_PROCESSING, "Processing"),
+        (STATUS_SHIPPED, "Shipped"),
+        (STATUS_DELIVERED, "Delivered"),
         (STATUS_CANCELLED, "Cancelled"),
     ]
 
