@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}My Orders — Crafty{% endblock %}
+{% block content %}
+<h1>My Orders</h1>
+{% if orders %}
+  <ul>
+    {% for order in orders %}
+      <li>
+        <a href="{% url 'buyer_order_detail' order.pk %}">Order #{{ order.pk }}</a>
+        — ₹{{ order.total_amount_inr }} — {{ order.get_status_display }}
+        <small>{{ order.created_at }}</small>
+      </li>
+    {% endfor %}
+  </ul>
+  {% if is_paginated %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Prev</a>{% endif %}
+      <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    </div>
+  {% endif %}
+{% else %}
+  <p>You have no orders yet.</p>
+{% endif %}
+{% endblock %}

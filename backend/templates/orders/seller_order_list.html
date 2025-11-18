@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Seller Orders — Crafty{% endblock %}
+{% block content %}
+<h1>Orders containing your products</h1>
+{% if orders %}
+  <ul>
+    {% for order in orders %}
+      <li>
+        <a href="{% url 'seller_order_detail' order.pk %}">Order #{{ order.pk }}</a>
+        — Total: ₹{{ order.total_amount_inr }} — {{ order.get_status_display }} — {{ order.created_at }}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No orders include your products yet.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Seller view: Order #{{ order.pk }}{% endblock %}
+{% block content %}
+<h1>Seller view — Order #{{ order.pk }}</h1>
+<p>Buyer: {{ order.buyer }}</p>
+<p>Status: <span id="order-status">{{ order.get_status_display }}</span></p>
+
+<h3>Your items in this order</h3>
+<table>
+  <thead><tr><th>Product</th><th>Unit</th><th>Qty</th><th>Line total</th></tr></thead>
+  <tbody>
+    {% for item in order.items.all %}
+      {% if item.product and item.product.seller == user %}
+        <tr>
+          <td><a href="{{ item.product.get_absolute_url }}">{{ item.product.title }}</a></td>
+          <td>₹{{ item.unit_price_inr }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>₹{{ item.get_total_inr }}</td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<form id="status-form" method="post" action="{% url 'seller_order_update_status' order.pk %}">
+  {% csrf_token %}
+  <label>Update status:
+    <select name="status">
+      <option value="processing">Processing</option>
+      <option value="shipped">Shipped</option>
+      <option value="delivered">Delivered</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  </label>
+  <button type="submit">Update</button>
+</form>
+
+<script>
+document.getElementById('status-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const csrftoken = document.cookie.split('csrftoken=')[1]?.split(';')[0];
+  try {
+    const resp = await fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: fd
+    });
+    const j = await resp.json();
+    if (j.ok) {
+      document.getElementById('order-status').textContent = j.status;
+      alert('Status updated');
+    } else {
+      alert('Could not update status');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error updating status');
+  }
+});
+</script>
+{% endblock %}
