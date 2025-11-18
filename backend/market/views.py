@@ -54,7 +54,7 @@ class HomeView(TemplateView):
 
         # Top artisans: ArtistProfile with product counts (prefetch/products)
         artisans_qs = ArtistProfile.objects.select_related("user").annotate(
-            product_count=models.Count("user__products")
+            product_count=models.Count("user__product")
         ).order_by("-product_count", "-id")
 
         # Optimize product queries: select_related for seller & category, prefetch images
