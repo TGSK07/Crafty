@@ -7,6 +7,10 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from django.views.generic import ListView, DetailView
+from django.urls import reverse
+from django.db.models import Prefetch, Q
+
 from .cart import add_to_cart, get_cart, cart_items_and_total, set_quantity, remove_from_cart, clear_cart, cart_total_quantity
 from .models import Order, OrderItem, Payment
 
@@ -151,4 +155,94 @@ class PaymentVerifyView(LoginRequiredMixin, View):
         clear_cart(request.session) # clear session cart
         
         return JsonResponse({"status":"ok", "order_id":order.pk})
+    
+
+
+# Buyer Views
+class BuyerOrderListView(LoginRequiredMixin, ListView):
+    model = Order
+    template_name = "orders/buyer_order_list.html"
+    content_object_name = "orders"
+    paginate_by = 12
+
+    def get_queryset(self):
+        # only the orders belongs to the logged-in buyer
+        qs = Order.objects.filter(buyer=self.request.user).order_by("-created_at").prefetch_related("items__product")
+        return qs
+
+class BuyerOrderDeatilView(LoginRequiredMixin, DetailView):
+    model = Order
+    template_name = "orders/buyer_order_detail.html"
+    context_object_name = "order"
+
+    def get_object(self, queryset=None):
+        order = super().get_object(queryset)
+        if order.buyer != self.request.user and not self.request.user.is_staff:
+            raise HttpResponseForbidden("You cannot view this Order.")
+        return order
+
+# Seller Views
+class SellerOrderListView(LoginRequiredMixin, DetailView):
+    model = Order
+    template_name = "orders/seller_order_lsit.html"
+    context_object_name = "orders"
+    paginate_by = 12
+
+    def dispatch(self, request, *args, **kwargs):
+        # ensure the user is seller
+        if getattr(request.user, "user_type", None)!="seller" and not request.user.is_staff:
+            return HttpResponseForbidden("Only sellers can view seller orders.")
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        # Orders that contain itmes for products owned by this seller
+
+        seller_items = OrderItem.objects.filter(product_seller=self.request.user).values_list("order_id", flat=True)
+        qs = Order.objects.filter(pk__in=seller_items).order_by("-created_at").prefetch_related(
+            Prefetch("items", queryset=OrderItem.objects.select_related("product"))
+            )
+        return qs
+
+class SellerOrderDeatilView(LoginRequiredMixin, DetailView):
+    model = Order
+    template_name = "orders/seller_order_detail.html"
+    context_object_name = "order"
+
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request.user, "user_type", None)!="seller" and not request.user.is_staff:
+            return HttpResponseForbidden("Only sellers can view seller order details.")
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_object(self, queryset=None):
+        order = super().get_object(queryset)
+        # ensure the order cotnains al least one items for this seller
+        has = order.items.filter(product__seller=self.request.user).exist()
+        if not has and not self.request.user.is_staff:
+            raise HttpResponseForbidden("You cannot view this order.")
+        return order
+
+class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
+    # Seller can change the status of the product.
+
+    def post(self, request, pk):
+        if getattr(request.user, "user_type", None) != "seller" and not request.user.is_staff:
+            return HttpResponseForbidden("Not Allowed.")
+        
+        order = get_object_or_404(Order, pk=pk)
+
+        if not order.items.filter(product__seller==request.user).exists() and not request.user.is_staff:
+            return HttpResponseBadRequest("Not Allowed.")
+        
+        new_status = request.POST.get("status")
+        allowed = {"processing", "shipped", "delivered", "cancelled"}
+        if new_status not in allowed:
+            return HttpResponseBadRequest("Invalid status.")
+        
+        order.status = new_status
+        order.save(update_fields=["status", "updated_at"])
+
+        # return JSON for AJAX or redirect for form
+        if request.headers.get("x-requested-with")=="XMKHttpRequest":
+            return JsonResponse({"ok": True, "status":order.status})
+        return redirect(reverse("seller_order_detail", args=[order.pk]))
     
