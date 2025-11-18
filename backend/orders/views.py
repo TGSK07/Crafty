@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.conf import settings
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.views.generic import ListView, DetailView
@@ -162,7 +162,7 @@ class PaymentVerifyView(LoginRequiredMixin, View):
 class BuyerOrderListView(LoginRequiredMixin, ListView):
     model = Order
     template_name = "orders/buyer_order_list.html"
-    content_object_name = "orders"
+    context_object_name = "orders"
     paginate_by = 12
 
     def get_queryset(self):
@@ -174,17 +174,16 @@ class BuyerOrderDeatilView(LoginRequiredMixin, DetailView):
     model = Order
     template_name = "orders/buyer_order_detail.html"
     context_object_name = "order"
-
     def get_object(self, queryset=None):
         order = super().get_object(queryset)
         if order.buyer != self.request.user and not self.request.user.is_staff:
-            raise HttpResponseForbidden("You cannot view this Order.")
+            raise HttpResponseBadRequest("You cannot view this Order.")
         return order
 
 # Seller Views
-class SellerOrderListView(LoginRequiredMixin, DetailView):
+class SellerOrderListView(LoginRequiredMixin, ListView):
     model = Order
-    template_name = "orders/seller_order_lsit.html"
+    template_name = "orders/seller_order_list.html"
     context_object_name = "orders"
     paginate_by = 12
 
@@ -195,13 +194,13 @@ class SellerOrderListView(LoginRequiredMixin, DetailView):
         return super().dispatch(request, *args, **kwargs)
     
     def get_queryset(self):
-        # Orders that contain itmes for products owned by this seller
-
-        seller_items = OrderItem.objects.filter(product_seller=self.request.user).values_list("order_id", flat=True)
+        # Orders that contain items for products owned by this seller
+        seller_items = OrderItem.objects.filter(product__seller=self.request.user).values_list("order_id", flat=True)
         qs = Order.objects.filter(pk__in=seller_items).order_by("-created_at").prefetch_related(
             Prefetch("items", queryset=OrderItem.objects.select_related("product"))
-            )
+        )
         return qs
+
 
 class SellerOrderDeatilView(LoginRequiredMixin, DetailView):
     model = Order
@@ -216,9 +215,9 @@ class SellerOrderDeatilView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None):
         order = super().get_object(queryset)
         # ensure the order cotnains al least one items for this seller
-        has = order.items.filter(product__seller=self.request.user).exist()
+        has = order.items.filter(product__seller=self.request.user).exists()
         if not has and not self.request.user.is_staff:
-            raise HttpResponseForbidden("You cannot view this order.")
+            raise HttpResponseBadRequest("You cannot view this order.")
         return order
 
 class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
@@ -230,7 +229,7 @@ class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
         
         order = get_object_or_404(Order, pk=pk)
 
-        if not order.items.filter(product__seller==request.user).exists() and not request.user.is_staff:
+        if not order.items.filter(product__seller=request.user).exists() and not request.user.is_staff:
             return HttpResponseBadRequest("Not Allowed.")
         
         new_status = request.POST.get("status")
