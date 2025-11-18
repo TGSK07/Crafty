@@ -174,11 +174,13 @@ class BuyerOrderDeatilView(LoginRequiredMixin, DetailView):
     model = Order
     template_name = "orders/buyer_order_detail.html"
     context_object_name = "order"
-    def get_object(self, queryset=None):
-        order = super().get_object(queryset)
-        if order.buyer != self.request.user and not self.request.user.is_staff:
-            raise HttpResponseBadRequest("You cannot view this Order.")
-        return order
+
+    def get_queryset(self):
+        # Only order that belongs to the logged-in buyer
+        qs = Order.objects.all()
+        if not self.request.user.is_staff:
+            qs = qs.filter(buyer=self.request.user)
+        return qs.prefetch_related("items__product", "payments")
 
 # Seller Views
 class SellerOrderListView(LoginRequiredMixin, ListView):
@@ -212,13 +214,11 @@ class SellerOrderDeatilView(LoginRequiredMixin, DetailView):
             return HttpResponseForbidden("Only sellers can view seller order details.")
         return super().dispatch(request, *args, **kwargs)
     
-    def get_object(self, queryset=None):
-        order = super().get_object(queryset)
-        # ensure the order cotnains al least one items for this seller
-        has = order.items.filter(product__seller=self.request.user).exists()
-        if not has and not self.request.user.is_staff:
-            raise HttpResponseBadRequest("You cannot view this order.")
-        return order
+    def get_queryset(self):
+        seller_order_ids = OrderItem.objects.filter(product__seller=self.request.user).values_list("order_id", flat=True)
+        qs = Order.objects.filter(pk__in=seller_order_ids)
+        qs = qs.prefetch_related(Prefetch("items", queryset=OrderItem.objects.select_related("product")))
+        return qs
 
 class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
     # Seller can change the status of the product.
@@ -241,7 +241,8 @@ class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
         order.save(update_fields=["status", "updated_at"])
 
         # return JSON for AJAX or redirect for form
-        if request.headers.get("x-requested-with")=="XMKHttpRequest":
+        xrw = request.headers.get("X-Requested-With") or request.headers.get("x-requested-with")
+        if xrw and xrw.lower()=="xmlhttprequest":
             return JsonResponse({"ok": True, "status":order.status})
-        return redirect(reverse("seller_order_detail", args=[order.pk]))
+        return redirect(reverse("seller_order_list"))
     
