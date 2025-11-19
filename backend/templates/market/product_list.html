@@ -61,11 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Selectors
-    const cartIconAndText = document.querySelector('.cart-link'); 
-    const cartDrawer = document.getElementById('cart-drawer');
-    const cartBody = document.getElementById('cart-drawer-body');
-    const cartClose = document.getElementById('cart-close');
-    const backdrop = document.getElementById('drawer-backdrop');
+    const cartIconAndText = document.querySelector('.cart-link');
     const cartCountEl = document.getElementById('cart-count'); 
 
     // Utility function to get CSRF token
@@ -75,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (parts.length === 2) return parts.pop().split(';').shift();
         return null;
     }
+    
 
     // Helper to animate and set count
     function setCartCount(n) {
@@ -86,52 +83,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     window.setCartCount = setCartCount; 
 
-    // Drawer functions (assuming translate-x-full classes control visibility)
-    function openDrawer() {
-        if (!cartDrawer || !backdrop) return;
-        cartDrawer.classList.remove('translate-x-full');
-        backdrop.classList.remove('hidden');
-    }
-    function closeDrawer() {
-        if (!cartDrawer || !backdrop) return;
-        cartDrawer.classList.add('translate-x-full');
-        backdrop.classList.add('hidden');
-    }
-
-    // Event listener for opening the drawer (replaces cartBtn listener)
-    cartIconAndText?.addEventListener('click', async (e) => {
-        e.preventDefault(); 
-        openDrawer();
-        
-        try {
-            if (cartBody) {
-                 cartBody.innerHTML = '<div class="p-8 text-center text-gray-500">Loading cart...</div>';
-            }
-            const res = await fetch(CraftyConfig.cartUrl); 
-            if (res.ok) {
-                const html = await res.text();
-                cartBody.innerHTML = html;
-            } else {
-                cartBody.innerHTML = '<div class="p-8 text-red-500">Could not load cart.</div>';
-            }
-        } catch (err) {
-            cartBody.innerHTML = '<div class="p-8 text-red-500">Network error.</div>';
-        }
-    });
-
-    cartClose?.addEventListener('click', closeDrawer);
-    backdrop?.addEventListener('click', closeDrawer);
-
-    // load initial count
-    (async function loadCount() {
-        try {
-            const r = await fetch(CraftyConfig.cartCountUrl); 
-            if (r.ok) {
-                const j = await r.json();
-                setCartCount(j.count || 0);
-            }
-        } catch (e) { /* ignore */ }
-    })();
 
     // Intercept add-to-cart forms (both quick-add and detail page)
     document.addEventListener('submit', async function (e) {
@@ -204,10 +155,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(() => {
                     submitBtn.textContent = submitBtn.dataset.origText || 'Quick Add';
                     submitBtn.disabled = false;
-                }, 1200);
+                }, 1100);
 
-                // Open drawer and refresh its body
-                cartIconAndText?.click();
+                // small cart icon pulse (assumes cartCountEl exists)
+                if (cartCountEl) {
+                cartCountEl.style.transform = 'scale(1.35)';
+                cartCountEl.style.transition = 'transform 160ms ease';
+                setTimeout(() => {
+                    cartCountEl.style.transform = '';
+                }, 160);
+                }
 
             } else {
                 // Server error (e.g., validation failed)
