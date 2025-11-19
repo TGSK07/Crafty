@@ -104,64 +104,85 @@
 
 <script>
 document.getElementById('status-form').addEventListener('submit', async function(e){
-  e.preventDefault();
-  
-  const form = e.target;
-  const statusDisplay = document.getElementById('order-status');
-  const updateButton = form.querySelector('button[type="submit"]');
+  e.preventDefault();
 
-  const fd = new FormData(form);
-  // Simple cookie reader (relying on base.html setup for getCookie if available)
-  const getCookie = name => {
-    const v = `; ${document.cookie}`;
-    const parts = v.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-  };
-  const csrftoken = getCookie('csrftoken');
-  
-  if (updateButton) {
-    updateButton.disabled = true;
-    updateButton.textContent = 'Saving...';
-  }
+  const form = e.target;
+  const statusDisplay = document.getElementById('order-status');
+  const updateButton = form.querySelector('button[type="submit"]');
 
-  try {
-    const resp = await fetch(form.action, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': csrftoken,
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: fd
-    });
-    
-    const j = await resp.json();
-    
-    if (j.ok) {
-        // Update text display (optional, as we are redirecting)
-        statusDisplay.textContent = j.status_display; 
-        
-        // Update visual tag (optional, as we are redirecting)
-        const currentStatusClass = statusDisplay.className.match(/status-(\w+)/)?.[0];
-        if (currentStatusClass) {
-            statusDisplay.classList.remove(currentStatusClass);
-        }
-        statusDisplay.classList.add(`status-${j.status_value}`);
-        
-        // --- CRITICAL CHANGE: Redirect to seller order list ---
-        window.location.href = "{% url 'seller_order_list' %}";
+  const fd = new FormData(form);
 
-    } else {
-        alert('Could not update status: ' + (j.error || 'Server error.'));
-    }
-  } catch (err) {
-    console.error('AJAX Error:', err);
-    alert('Network error during status update.');
-  } finally {
-    if (updateButton) {
-      updateButton.disabled = false;
-      updateButton.textContent = 'Update Status';
-    }
-  }
+  // cookie helper
+  const getCookie = name => {
+    const v = `; ${document.cookie}`;
+    const parts = v.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  };
+  const csrftoken = getCookie('csrftoken');
+
+  if (updateButton) {
+    updateButton.disabled = true;
+    updateButton.dataset.origText = updateButton.textContent;
+    updateButton.textContent = 'Saving...';
+  }
+
+  try {
+    const resp = await fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: fd,
+      credentials: 'same-origin'
+    });
+
+    // If non-2xx, try to parse json error, else throw
+    if (!resp.ok) {
+      let errMsg = `HTTP ${resp.status}`;
+      try {
+        const errJson = await resp.json();
+        errMsg = errJson.error || JSON.stringify(errJson);
+      } catch (e) {
+        const txt = await resp.text();
+        if (txt) errMsg = txt.slice(0, 300);
+      }
+      throw new Error(errMsg);
+    }
+
+    // Check Content-Type before parsing JSON
+    const contentType = resp.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      // Server returned HTML/redirect — follow fallback (redirect to seller order list)
+      window.location.href = "{% url 'seller_order_list' %}";
+      return;
+    }
+
+    const j = await resp.json();
+
+    if (j && j.ok) {
+      // Update UI (optional)
+      statusDisplay.textContent = j.status_display || j.status_value;
+      statusDisplay.className = `status-${j.status_value}`;
+
+      // Redirect or show toast — you currently redirect:
+      window.location.href = "{% url 'seller_order_list' %}";
+      return;
+    } else {
+      throw new Error(j && j.error ? j.error : 'Unknown error');
+    }
+
+  } catch (err) {
+    console.error('AJAX Error:', err);
+    alert('Could not update status: ' + (err.message || 'Network/server error.'));
+  } finally {
+    if (updateButton) {
+      updateButton.disabled = false;
+      updateButton.textContent = updateButton.dataset.origText || 'Update Status';
+    }
+  }
 });
 </script>
+
 {% endblock %}
