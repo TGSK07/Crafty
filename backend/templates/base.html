@@ -30,7 +30,7 @@
         <div class="nav-right">
           <button id="theme-toggle" class="theme-toggle">🌙</button>
 
-          <a href="{% url 'cart' %}" class="cart-link", id='cart-link'>
+          <a href="{% url 'cart' %}" class="cart-link" id="cart-link">
             🛒 Cart <span id="cart-count">0</span>
           </a>
 
@@ -99,48 +99,21 @@
       <small>© 2025 Crafty. All rights reserved.</small>
     </div>
   </footer>
-  <footer class="site-footer">
-</footer>
-
-</body>
-</html>
 
 
-<script>
-  // Helper: get cookie value (CSRF)
-  function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-  }
+<!-- Cart drawer (place just before closing </body>) -->
+<div id="drawer-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" aria-hidden="true"></div>
 
-  // update cart-count DOM
-  function setCartCount(n) {
-    const el = document.getElementById('cart-count');
-    if (!el) return;
-    el.textContent = n;
-    // small visual pulse
-    el.style.transform = 'scale(1.1)';
-    setTimeout(()=> el.style.transform = 'scale(1)', 150);
-  }
+<div id="cart-drawer" class="fixed top-0 right-0 w-80 h-full bg-white dark:bg-surface shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
+  <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+    <h2 class="text-xl font-semibold">Your Cart</h2>
+    <button id="cart-close" class="text-2xl hover:text-error" aria-label="Close cart">&times;</button>
+  </div>
+  <div id="cart-drawer-body" class="p-4 overflow-y-auto h-full">
+    <p class="text-center text-muted">Loading cart...</p>
+  </div>
+</div>
 
-  // fetch initial cart count on load
-  document.addEventListener('DOMContentLoaded', async function () {
-    try {
-      const resp = await fetch(CraftyConfig.cartCountUrl);
-      if (resp.ok) {
-        const j = await resp.json();
-        setCartCount(j.count || 0);
-      }
-    } catch (e) {
-      // ignore silently
-      console.error('cart count load error', e);
-    }
-  });
-
-  // expose global function so add-to-cart script can call it
-  window.setCartCount = setCartCount;
-</script>
 
 </body>
 </html>
