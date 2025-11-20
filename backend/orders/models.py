@@ -31,8 +31,39 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.pk} - {self.get_status_display()}"
+    
+    def recalc_status_from_items(self):
+        '''
+        Aggregate order status from related OrderItem statuses:
+        - If any item is cancelled and all others cancelled -> order cancelled
+        - If all items delivered -> delivered
+        - If any item shipped and none pending/processing -> shipped
+        - If any item processing -> processing
+        Otherwise leave as paid/pending depending.
+        '''
 
-class OrderItem(models.Model):
+        items = list(self.items.all())
+        if not items: return
+        statuses = {item.status for item in items}
+        if statuses <= {OrderItem.STATUS_CANCELLED}:
+            new = Order.STATUS_CANCELLED
+        elif statuses == {OrderItem.STATUS_DELIVERED}:
+            new = Order.STATUS_DELIVERED
+        elif OrderItem.STATUS_SHIPPED in statuses and not (OrderItem.STATUS_PROCESSING in statuses):
+            new = Order.STATUS_SHIPPED
+        elif OrderItem.STATUS_PROCESSING in statuses:
+            new = Order.STATUS_PROCESSING
+        elif self.status == Order.STATUS_PENDING:
+            new = Order.STATUS_PENDING
+        else:
+            new = self.status
+        
+        if new != self.status:
+            self.status = new 
+            self.save()
+
+
+class OrderItem(models.Model):    
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey("market.Product", on_delete=models.SET_NULL, null=True)
     unit_price_inr = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
