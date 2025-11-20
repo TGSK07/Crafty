@@ -11,7 +11,7 @@
                     {% for img in images %}
                         <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}" class="main-product-image">
                     {% empty %}
-                        <div class="image-placeholder">No images available</div>
+                        <img src="{% static 'images/product_placeholder.jpg' %}" alt="{{ img.alt_text|default:product.title }}" class="main-product-image">
                     {% endfor %}
                 </div>
                 {% if images|length > 1 %}

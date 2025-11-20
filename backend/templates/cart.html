@@ -29,7 +29,7 @@
                                                 {% if it.product.images.first %}
                                                     <img src="{{ it.product.images.first.image.url }}" alt="{{ it.product.title }}" class="product-thumb">
                                                 {% else %}
-                                                    <div class="product-thumb-placeholder"></div>
+                                                    <img src="{% static 'images/product_placeholder.jpg' %}" alt="{{ it.product.title }}" class="product-thumb">
                                                 {% endif %}
                                             </a>
                                             <div class="product-title-details">

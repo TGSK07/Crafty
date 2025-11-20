@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Browse · Crafty{% endblock %}
 
 {% block content %}
@@ -20,7 +21,7 @@
                         {% if product.images.first %}
                             <img src="{{ product.images.first.image.url }}" alt="{{ product.title }}" class="product-image" />
                         {% else %}
-                            <div class="product-image placeholder">No image</div>
+                            <img src="{% static 'images/product_placeholder.jpg' %}" alt="{{ product.title }}" class="product-image" />
                         {% endif %}
                     </a>
                     <div class="product-details">
