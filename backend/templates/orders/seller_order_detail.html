@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
+<link rel="stylesheet" href="{% static "css/order_item_status.css" %}}">
+<script src="{% static "js/order_item_status.js" %} %}"></script>
 {% block title %}Seller view: Order #{{ order.pk }}{% endblock %}
 
 {% block content %}
@@ -19,9 +21,10 @@
                     <thead>
                         <tr>
                             <th class="col-product-detail">Product</th>
-                            <th class="col-price-detail text-right">Unit Price</th>
+                            <th class="col-price-detail text-center">Unit Price</th>
                             <th class="col-qty-detail text-center">Qty</th>
-                            <th class="col-line-total-detail text-right">Line Total</th>
+                            <th class="col-line-total-detail text-left">Line Total</th>
+                            <th class="col-status-detail text-right">Item Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -47,6 +50,18 @@
                                     <td class="price-cell text-right">₹{{ item.unit_price_inr }}</td>
                                     <td class="qty-cell text-center">{{ item.quantity }}</td>
                                     <td class="total-cell text-right font-semibold">₹{{ item.get_total }}</td>
+                                    <td>
+                                      <form action="{% url 'seller_orderitem_update_status' item.pk %}" class="item-status-form" method="post" data-item-id="{{ item.pk }}">
+                                       {% csrf_token %}
+                                        <select name="status" class="form-select">
+                                          {% for val, label in item.STATUS_CHOICES  %}
+                                            <option value="{{ val }}" {% if item.status == val %}selected{% endif %}>{{ label }}</option>
+                                          {% endfor %}
+                                        </select>
+                                        <br>
+                                        <button type="submit" class="btn btn-sm btn-secondary">Save</button>
+                                      </form>
+                                    </td>
                                 </tr>
                             {% endif %}
                         {% endfor %}
