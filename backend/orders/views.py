@@ -167,7 +167,7 @@ class BuyerOrderListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # only the orders belongs to the logged-in buyer
-        qs = Order.objects.filter(buyer=self.request.user).order_by("-created_at").prefetch_related("items__product")
+        qs = Order.objects.filter(buyer=self.request.user).exclude(status="pending").order_by("-created_at").prefetch_related("items__product")
         return qs
 
 class BuyerOrderDeatilView(LoginRequiredMixin, DetailView):
@@ -198,7 +198,7 @@ class SellerOrderListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         # Orders that contain items for products owned by this seller
         seller_items = OrderItem.objects.filter(product__seller=self.request.user).values_list("order_id", flat=True)
-        qs = Order.objects.filter(pk__in=seller_items).order_by("-created_at").prefetch_related(
+        qs = Order.objects.filter(pk__in=seller_items).exclude(status="pending").order_by("-created_at").prefetch_related(
             Prefetch("items", queryset=OrderItem.objects.select_related("product"))
         )
         return qs
