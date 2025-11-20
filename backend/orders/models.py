@@ -87,6 +87,15 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.product} x {self.quantity}"
     
+class OrderStatusLog(models.Model):
+    order = models.ForeignKey(Order, related_name="status_logs", on_delete=models.CASCADE)
+    item = models.models.ForeignKey(OrderItem, related_name="status_logs", null=True, blank=True, on_delete=models.CASCADE)
+    changed_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    old_status = models.CharField(max_length=30)
+    new_status = models.CharField(max_length=30)
+    note = models.CharField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class Payment(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="payments")
     razorpay_payment_id = models.CharField(max_length=200)
