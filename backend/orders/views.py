@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.db.models import Prefetch, Q
 
 from .cart import add_to_cart, get_cart, cart_items_and_total, set_quantity, remove_from_cart, clear_cart, cart_total_quantity
-from .models import Order, OrderItem, Payment
+from .models import Order, OrderItem, Payment, OrderStatusLog
 
 # Razorpay config
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID") or settings.RAZORPAY_KEY_ID
@@ -246,3 +246,30 @@ class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
             return JsonResponse({"ok": True, "status":order.status})
         return redirect(reverse("seller_order_list"))
     
+class SellerOrderItemStatusUpdateView(LoginRequiredMixin, View):
+    def post(self, request, item_pk):
+        if getattr(request.user, "user_type", None) != "seller" and not request.user.is_staff:
+            return HttpResponseForbidden("Not Allowed.")
+        
+        item = get_object_or_404(OrderItem, pk=item_pk)
+        if not item.product or item.product.seller != request.user:
+            return HttpResponseForbidden("You cannot modify this item.")
+        new_status = request.POST.get("status")
+        allowed = {s for s,_ in OrderItem.STATUS_CHOICES}
+        if new_status not in allowed:
+            return HttpResponseBadRequest("Invalid stauts.")
+        old = item.status
+        item.status = new_status
+        item.save()
+        
+        # log 
+        OrderStatusLog.objects.create(order=item.order, item=item, changed_by=request.user, old_status=old, new_status=new_status)
+        # aggragate order status
+        item.order.recalc_status_from_items()
+
+        # return JSON 
+        xrw = request.get("X-Requested-With", "").lower()
+        payload = {"ok":True, "item_status":new_status, "order_status":item.order.status}
+        if xrw == "xmlhttprequest":
+            return JsonResponse(payload)
+        return redirect(reverse("seller_order_detail", args=[item.order.pk]))
