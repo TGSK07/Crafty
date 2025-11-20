@@ -89,7 +89,7 @@ class OrderItem(models.Model):
     
 class OrderStatusLog(models.Model):
     order = models.ForeignKey(Order, related_name="status_logs", on_delete=models.CASCADE)
-    item = models.models.ForeignKey(OrderItem, related_name="status_logs", null=True, blank=True, on_delete=models.CASCADE)
+    item = models.ForeignKey(OrderItem, related_name="status_logs", null=True, blank=True, on_delete=models.CASCADE)
     changed_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     old_status = models.CharField(max_length=30)
     new_status = models.CharField(max_length=30)
