@@ -274,8 +274,8 @@ class SellerOrderItemStatusUpdateView(LoginRequiredMixin, View):
         item.order.recalc_status_from_items()
 
         # return JSON 
-        xrw = request.get("X-Requested-With", "").lower()
+        xrw = request.headers.get("X-Requested-With") or request.headers.get("x-requested-with")
         payload = {"ok":True, "item_status":new_status, "order_status":item.order.status}
-        if xrw == "xmlhttprequest":
+        if xrw and xrw.lower() == "xmlhttprequest":
             return JsonResponse(payload)
         return redirect(reverse("seller_order_detail", args=[item.order.pk]))
