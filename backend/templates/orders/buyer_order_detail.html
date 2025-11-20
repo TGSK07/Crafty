@@ -55,9 +55,9 @@
                                     </div>
                                 </td>
                                 
-                                <td class="price-cell text-right">₹{{ item.unit_price_inr }}</td>
+                                <td class="price-cell text-right">₹ {{ item.unit_price_inr }}</td>
                                 <td class="qty-cell text-center">{{ item.quantity }}</td>
-                                <td class="total-cell text-right font-semibold">₹{{ item.get_total_inr }}</td>
+                                <td class="total-cell text-right font-semibold">₹ {{ item.get_total }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -66,7 +66,7 @@
                 <div class="final-order-summary">
                     <div class="summary-line grand-total-line">
                         <strong>Order Total:</strong>
-                        <strong class="total-price-value">₹{{ order.total_amount_inr }}</strong>
+                        <strong class="total-price-value">₹ {{ order.total_amount_inr }}</strong>
                     </div>
                 </div>
             </div>
@@ -82,7 +82,7 @@
                         </div>
                         <div class="payment-detail-line">
                             <span class="detail-label">Amount Paid:</span>
-                            <span class="detail-value">₹{{ p.amount_inr }}</span>
+                            <span class="detail-value">₹ {{ p.amount_inr }}</span>
                         </div>
                         <div class="payment-detail-line">
                             <span class="detail-label">Date:</span>
