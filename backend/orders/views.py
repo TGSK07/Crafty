@@ -219,6 +219,12 @@ class SellerOrderDeatilView(LoginRequiredMixin, DetailView):
         qs = Order.objects.filter(pk__in=seller_order_ids)
         qs = qs.prefetch_related(Prefetch("items", queryset=OrderItem.objects.select_related("product")))
         return qs
+    
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        seller_items = self.object.items.filter(product__seller=self.request.user).select_related("product")
+        ctx["seller_items"] = seller_items
+        return ctx
 
 class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
     # Seller can change the status of the product.
