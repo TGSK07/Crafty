@@ -43,7 +43,7 @@
                                             {% if item.product.images.first %}
                                                 <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.title }}" class="product-thumb-small">
                                             {% else %}
-                                                <div class="product-thumb-placeholder-small"></div>
+                                                <img src="{% static "images/product_placeholder.jpg" %}" alt="{{ item.product.title }}" class="product-thumb-small fixed-size-thumb">
                                             {% endif %}
                                         </a>
                                         <div class="product-title-details">
