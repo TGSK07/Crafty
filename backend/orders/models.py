@@ -71,6 +71,28 @@ class Order(models.Model):
             for item in self.items.all()
             if item.product and item.product.seller == seller_user
         )
+    
+    def _agg_status(self, statuses:set):
+        """
+        Helper agg. logic: Given a set of item-status strings, return aggregated status.
+        """
+        if not statuses: return self.status
+        if statuses <= {OrderItem.STATUS_CANCELLED}: return Order.STATUS_CANCELLED
+        if statuses == {OrderItem.STATUS_DELIVERED}: return Order.STATUS_DELIVERED
+        if OrderItem.STATUS_SHIPPED in statuses and OrderItem.STATUS_PROCESSING not in statuses: return Order.STATUS_PROCESSING
+        return self.status
+    
+    def get_selelr_status(self, seller_user):
+        """
+        Compute status agg. Only from items that belongs to logged-in seller.
+        """
+        seller_items = self.items.filter(product__seller=seller_items)
+        statuses = set(seller_items.values_list("status", flat=True))
+        return self._agg_status(statuses)
+    
+    def get_seller_status_display(self, seller_user):
+        s = self.get_selelr_status(seller_user)
+        return dict(self.STATUS_CHOICES).get(s,s)
 
 
 class OrderItem(models.Model):    
