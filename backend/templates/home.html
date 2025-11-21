@@ -78,7 +78,7 @@
                     {% if product.images.first %}
                         <img src="{{ product.images.first.image.url }}" alt="{{ product.title }}" class="product-image">
                     {% else %}
-                        <div class="product-image placeholder">No image</div>
+                        <img src="{% static "images/product_placeholder.jpg" %}}" alt="{{ product.title }}" class="product-image">
                     {% endif %}
                 </a>
                 <div class="product-details">
@@ -116,10 +116,9 @@
                 {% if artisan.image %}
                     <img src="{{ artisan.image.url }}" alt="{{ artisan.display_name }}" class="artisan-card-image">
                 {% else %}
-                    <div class="artisan-card-image placeholder">No Image</div>
+                    <img src="{% static "images/artist_placeholder.jpg" %}" alt="{{ artisan.display_name }}" class="artisan-card-image">
                 {% endif %}
-                <p>{{ artisan.display_name }} - {{ artisan.specialty }}</p>
-            
+                {{ artisan.display_name }}
             {% empty %}
             <p>No top artisans found.</p>
             {% endfor %}
