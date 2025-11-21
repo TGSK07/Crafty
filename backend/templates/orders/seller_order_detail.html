@@ -82,8 +82,8 @@
                 
                 <div class="status-update-card info-card">
                     <h3>Current Status</h3>
-                    <div class="current-status-display status-{{ order.status }}">
-                        <span id="order-status">{{ order.get_status_display }}</span>
+                    <div class="current-status-display status-{{ seller_status }}">
+                        <span id="order-status">{{ seller_status_display }}</span>
                     </div>
                     <a href="{% url "seller_order_list" %}">
                       <button type="submit" class="btn btn-primary btn-full-width">Update Status</button>
