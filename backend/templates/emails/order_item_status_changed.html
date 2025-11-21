@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Order item update</title>
+  </head>
+  <body style="font-family: system-ui, -apple-system, Roboto, Arial; color:#111;">
+    <div style="max-width:680px;margin:24px auto;padding:20px;border:1px solid #eee;border-radius:8px;">
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="{{ logo_url }}" alt="{{ site_name }}" style="height:48px;border-radius:6px;">
+        <h2 style="margin:0;">{{ site_name }}</h2>
+      </div>
+
+      <hr style="margin:16px 0;"/>
+
+      <p>Hello {{ buyer.get_full_name|default:buyer.username }},</p>
+
+      <p>
+        The status for <strong>{{ item.product.title }}</strong> in your order
+        <strong>#{{ order.pk }}</strong> has been updated to:
+      </p>
+
+      <p style="font-size:18px;font-weight:700;margin:12px 0;">
+        {{ item.get_status_display }}
+      </p>
+
+      <p>
+        You can view your order details here:
+        <a href="{{ order_url }}">{{ order_url }}</a>
+      </p>
+
+      <hr/>
+      <p style="color:#666;font-size:13px">
+        If you have any questions, reply to this email or visit the Crafty Help Center.
+      </p>
+    </div>
+  </body>
+</html>
