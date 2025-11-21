@@ -232,6 +232,14 @@ class SellerOrderDeatilView(LoginRequiredMixin, DetailView):
         ctx = super().get_context_data(**kwargs)
         seller_items = self.object.items.filter(product__seller=self.request.user).select_related("product")
         ctx["seller_items"] = seller_items
+        seller = self.request.user
+        order = ctx["order"]
+        seller_revenue = sum(
+            item.unit_price_inr * item.quantity
+            for item in order.items.all()
+            if item.product and item.product.seller == seller
+        )
+        ctx["seller_revenue"] = seller_revenue
         return ctx
 
 class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
