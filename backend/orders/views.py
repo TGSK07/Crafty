@@ -206,11 +206,13 @@ class SellerOrderListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         seller = self.request.user
-        for order in context["orders"]:
+        orders = context.get("orders") or context.get("object_list") or []
+        for order in orders:
             order.seller_revenue = order.get_seller_total(seller)
+            order.seller_status = order.get_seller_status(seller)
+            order.seller_status_display = order.get_seller_status_display(seller)
         return context
         
-
 
 class SellerOrderDeatilView(LoginRequiredMixin, DetailView):
     model = Order
@@ -240,6 +242,8 @@ class SellerOrderDeatilView(LoginRequiredMixin, DetailView):
             if item.product and item.product.seller == seller
         )
         ctx["seller_revenue"] = seller_revenue
+        ctx["seller_status"] = order.get_seller_status(seller)
+        ctx["seller_status_display"] = order.get_seller_status_display(seller)
         return ctx
 
 class SellerOrderStatusUpdateView(LoginRequiredMixin, View):
@@ -291,7 +295,15 @@ class SellerOrderItemStatusUpdateView(LoginRequiredMixin, View):
 
         # return JSON 
         xrw = request.headers.get("X-Requested-With") or request.headers.get("x-requested-with")
-        payload = {"ok":True, "item_status":new_status, "order_status":item.order.status}
+        payload = {
+                    "ok": True,
+                    "item_status": item.status,
+                    "item_status_display": dict(OrderItem.STATUS_CHOICES).get(item.status, item.status),
+                    "seller_status": item.order.get_seller_status(request.user),
+                    "seller_status_display": item.order.get_seller_status_display(request.user),
+                    "order_status": item.order.status,
+                    "order_status_display": item.order.get_status_display(),
+                }
         if xrw and xrw.lower() == "xmlhttprequest":
             return JsonResponse(payload)
         return redirect(reverse("seller_order_detail", args=[item.order.pk]))
