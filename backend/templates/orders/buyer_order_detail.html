@@ -31,7 +31,8 @@
                             <th class="col-product-detail">Product</th>
                             <th class="col-price-detail text-right">Unit Price</th>
                             <th class="col-qty-detail text-center">Qty</th>
-                            <th class="col-line-total-detail text-right">Line Total</th>
+                            <th class="col-line-total-detail text-center">Line Total</th>
+                            <th class="col-line-total-detail text-right">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,6 +59,7 @@
                                 <td class="price-cell text-right">₹ {{ item.unit_price_inr }}</td>
                                 <td class="qty-cell text-center">{{ item.quantity }}</td>
                                 <td class="total-cell text-right font-semibold">₹ {{ item.get_total }}</td>
+                                <td class="total-cell text-right font-semibold order-status-tag status-{{ item.status }}">{{ item.status }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
