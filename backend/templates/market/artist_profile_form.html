@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if profile %}Edit Shop Profile{% else %}Create Shop Profile{% endif %} — Crafty{% endblock %}
+
+{% block content %}
+    <section class="container form-page-container">
+        <div class="product-form-card wide-form-card"> 
+            
+            <h1>{% if profile %}Edit Shop Profile{% else %}Create Your Shop Profile{% endif %}</h1>
+            <p class="form-description">
+                This information will be displayed publicly to customers, showcasing your identity and craft.
+            </p>
+
+            <form method="post" enctype="multipart/form-data" class="modern-form">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="error-list form-non-field-errors">
+                        {% for error in form.non_field_errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- General Details Grid -->
+                <div class="form-grid profile-form-grid">
+                    
+                    <div class="form-group">
+                        {{ form.display_name.label_tag }}
+                        {{ form.display_name }}
+                        {% if form.display_name.errors %}<div class="field-error">{{ form.display_name.errors }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.contact_number.label_tag }}
+                        {{ form.contact_number }}
+                        {% if form.contact_number.errors %}<div class="field-error">{{ form.contact_number.errors }}</div>{% endif %}
+                    </div>
+                    
+                    <!-- FIX 1: Bio Textarea (Reverted to standard rendering, styling needs external CSS) -->
+                    <div class="form-group full-width">
+                        {{ form.bio.label_tag }}
+                        {{ form.bio }}
+                        {% if form.bio.errors %}<div class="field-error">{{ form.bio.errors }}</div>{% endif %}
+                        <small class="text-muted">Tell your customers about your craft, inspiration, and location. (Non-resizable in CSS)</small>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.city.label_tag }}
+                        {{ form.city }}
+                        {% if form.city.errors %}<div class="field-error">{{ form.city.errors }}</div>{% endif %}
+                    </div>
+
+                    <!-- FIX 2: Location URL (Reverted to standard rendering, description below field) -->
+                    <div class="form-group">
+                        {{ form.location_map_url.label_tag }}
+                        {{ form.location_map_url }}
+                        <small class="text-muted">URL to your shop's map location (optional, e.g., Google Maps link).</small>
+                        {% if form.location_map_url.errors %}<div class="field-error">{{ form.location_map_url.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <hr class="form-separator" />
+
+                <!-- Profile Image Upload and Preview (Inline styles unchanged) -->
+                <div class="form-group image-upload-group full-width">
+                    {{ form.image.label_tag }}
+                    
+                    {% if profile.image %}
+                        <p class="current-image-info" style="
+                            display: flex; 
+                            align-items: center; 
+                            gap: 16px; 
+                            margin-top: 16px; 
+                            color: var(--color-text-muted);
+                            font-size: 0.95rem;
+                            padding: 8px;
+                            border: 1px solid var(--color-primary-dark);
+                            border-radius: 8px;
+                            background-color: var(--color-background);
+                        ">
+                            Current image: 
+                            <img 
+                                src="{{ profile.image.url }}" 
+                                alt="Current Profile Image" 
+                                style="width: 60px; 
+                                       height: 60px; 
+                                       object-fit: cover; 
+                                       border-radius: 50%; 
+                                       border: 2px solid var(--color-accent); 
+                                       flex-shrink: 0;"
+                            >
+                            <small class="text-muted" style="color: var(--color-text-muted);">Upload a new image below to replace the current one.</small>
+                        </p>
+                    {% endif %}
+                    
+                    <!-- FIX 3: Displaying path/clear button - The default Django widget output -->
+                    {{ form.image }} 
+                    {% if form.image.errors %}<div class="field-error">{{ form.image.errors }}</div>{% endif %}
+                </div>
+
+                <button class="btn btn-primary btn-full-width" type="submit">
+                    {% if profile %}Save Changes{% else %}Create Profile{% endif %}
+                </button>
+            </form>
+            
+            {% if profile %}
+                <div class="return-link-area">
+                    <hr class="form-separator" />
+                    {% if profile.slug %}
+                        <a href="{% url 'artist_profile_detail' profile.slug %}" class="btn btn-outline">View public profile</a>
+                    {% else %}
+                        <a href="{% url 'artist_profile_detail_by_pk' profile.user_id %}" class="btn btn-outline">View public profile</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        </div>
+    </section>
+{% endblock %}
