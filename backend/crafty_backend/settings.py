@@ -40,8 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     "users",
-    "orders",
-    "market",
     "market.apps.MarketConfig",
     "orders.apps.OrdersConfig"
 
@@ -160,3 +158,17 @@ CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if os.ge
 
 
 SITE_URL = "http://localhost:8000"
+
+
+
+# Email (dev)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # prints emails to console in dev
+DEFAULT_FROM_EMAIL = "Crafty <no-reply@crafty.local>"
+SITE_URL = "http://localhost:8000"
+SITE_NAME = "Crafty"
+
+# Celery (example using Redis)
+# CELERY_BROKER_URL = "redis://localhost:6379/0"
+# CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
