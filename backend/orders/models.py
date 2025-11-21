@@ -79,19 +79,20 @@ class Order(models.Model):
         if not statuses: return self.status
         if statuses <= {OrderItem.STATUS_CANCELLED}: return Order.STATUS_CANCELLED
         if statuses == {OrderItem.STATUS_DELIVERED}: return Order.STATUS_DELIVERED
-        if OrderItem.STATUS_SHIPPED in statuses and OrderItem.STATUS_PROCESSING not in statuses: return Order.STATUS_PROCESSING
+        if OrderItem.STATUS_DELIVERED in statuses and statuses<={OrderItem.STATUS_DELIVERED, OrderItem.STATUS_CANCELLED}: return Order.STATUS_DELIVERED
+        if OrderItem.STATUS_SHIPPED in statuses and OrderItem.STATUS_PROCESSING not in statuses: return Order.STATUS_SHIPPED
         return self.status
     
-    def get_selelr_status(self, seller_user):
+    def get_seller_status(self, seller_user):
         """
         Compute status agg. Only from items that belongs to logged-in seller.
         """
-        seller_items = self.items.filter(product__seller=seller_items)
+        seller_items = self.items.filter(product__seller=seller_user)
         statuses = set(seller_items.values_list("status", flat=True))
         return self._agg_status(statuses)
     
     def get_seller_status_display(self, seller_user):
-        s = self.get_selelr_status(seller_user)
+        s = self.get_seller_status(seller_user)
         return dict(self.STATUS_CHOICES).get(s,s)
 
 
