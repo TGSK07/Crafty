@@ -62,6 +62,16 @@ class Order(models.Model):
             self.status = new 
             self.save()
 
+    def get_seller_total(self, seller_user):
+        """
+        Return the Revenue make by the seller per order.
+        """
+        return sum(
+            item.unit_price_inr * item.quantity
+            for item in self.items.all()
+            if item.product and item.product.seller == seller_user
+        )
+
 
 class OrderItem(models.Model):    
     STATUS_PROCESSING = "processing"
