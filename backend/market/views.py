@@ -2,12 +2,12 @@ from django.shortcuts import render, get_list_or_404, redirect, get_object_or_40
 from django.views import View
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Product, ProductImage, ArtistProfile
-from .forms import ProductForm, ProductImageForm
+
 from django.contrib import messages
 from django.conf import settings
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import cache_page
@@ -20,6 +20,7 @@ from django.db.models.query import QuerySet
 
 from django.db import models
 from .models import Product, ProductImage, ArtistProfile, Category
+from .forms import ArtistProfileForm, ProductForm, ProductImageForm
 
 ALLOWED_IMAGE_CONTENT_TYPES = ("image/png", "image/jpeg", "image/jpg", "image/webp")
 MAX_IMAGE_SIZE = 2 * 1024 * 1024
@@ -312,3 +313,52 @@ class SellerDashboardView(LoginRequiredMixin, View):
             "orders_count": orders_count,
         }
         return render(request, "seller/dashboard.html", context)
+    
+class CreateOrEditArtistProfileView(LoginRequiredMixin, View):
+    """
+    If seller already has a profile, show edit form (GET) and handle update (POST).
+    Otherwise show create form and handle creation.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request.user, "user_type", None) != "seller" and not request.user.is_staff:
+            return HttpResponseForbidden("Only sellers can create/edit artist profile.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        profile = getattr(request.user, "artist_profile", None)
+        if profile:
+            form = ArtistProfileForm(instance=profile)
+        else:
+            form = ArtistProfileForm()
+        return render(request, "market/artist_profile_form.html", {"form": form, "profile": profile})
+
+    def post(self, request):
+        profile = getattr(request.user, "artist_profile", None)
+        if profile:
+            form = ArtistProfileForm(request.POST, request.FILES, instance=profile)
+        else:
+            form = ArtistProfileForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            prof = form.save(commit=False)
+            prof.user = request.user
+            prof.save()
+            # If you have slug url pattern, prefer redirect by slug:
+            # return redirect(reverse("artist_profile_detail", args=[prof.slug or prof.pk]))
+            messages.success(request, "Artist Profile created successfully.")
+            return redirect(reverse("artist_profile_detail", args=[prof.slug]))  # safe fallback
+        
+        print("hELLO")
+        return render(request, "market/artist_profile_form.html", {"form": form, "profile": profile})
+    
+
+class ArtistProfileDetailView(LoginRequiredMixin, View):
+    def get(self, request,**kwargs):
+        profile = None
+        if 'slug' in kwargs and kwargs['slug']:
+            profile = get_object_or_404(ArtistProfile, slug=kwargs['slug'])
+        elif 'pk' in kwargs:
+            profile = get_object_or_404(ArtistProfile, user_id=kwargs['pk'])
+        if not profile:
+            return 
+        return render(request, "market/artist_profile_detail.html", {"profile": profile})
