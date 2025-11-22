@@ -57,7 +57,7 @@ class ProfileView(LoginRequiredMixin, View):
     def get(self, request):
         return render(request, self.template_name)
     
-class UserProfileEditForm(LoginRequiredMixin, View):
+class UserProfileEditView(LoginRequiredMixin, View):
     template_name = "auth/edit_profile.html"
 
     def get(self, request):
