@@ -4,67 +4,256 @@
 
 {% block content %}
     <section class="container" style="margin-top: var(--spacing-lg);">
-        <h1>Browse Art & Products</h1>
+        
+        <!-- --- Product Page Grid Container --- -->
+        <div style="
+            display: grid; 
+            grid-template-columns: 280px 1fr; /* Fixed sidebar width (280px) and main area */
+            gap: 32px; 
+            align-items: flex-start; /* Ensure columns start at the top */
+        ">
 
-        <form method="get" class="search-form" style="margin-bottom: var(--spacing-lg); display: flex; gap: var(--spacing-sm);">
-            <input type="search" name="q" value="{{ q }}" placeholder="Search products..." class="search-input" />
-            <button type="submit" class="btn btn-primary">Search</button>
-        </form>
+            <!-- LEFT COLUMN: Search & Filters (Sidebar) -->
+            <aside style="position: sticky; top: var(--spacing-md);">
 
-        <div class="product-grid">
-            {% for product in page_obj.object_list %}
-                <article class="product-card">
-                    <a href="{% url 'product_detail' product.slug %}" class="product-image-container">
-                        {% if product.is_local_artisan %}
-                            <span class="local-artisan-tag">Local Artisan</span>
-                        {% endif %}
-                        {% if product.images.first %}
-                            <img src="{{ product.images.first.image.url }}" alt="{{ product.title }}" class="product-image" />
-                        {% else %}
-                            <img src="{% static 'images/product_placeholder.jpg' %}" alt="{{ product.title }}" class="product-image" />
-                        {% endif %}
-                    </a>
-                    <div class="product-details">
-                        <div>
-                            <h3><a href="{{ product.get_absolute_url }}">{{ product.title }}</a></h3>
-                            <p class="product-price">{{ product.get_price_display }}</p>
-                        </div>
+                <!-- Filter & Sort Component (Vertical Stack) -->
+                <form method="get" class="filters" style="
+                    display: flex;
+                    flex-direction: column; 
+                    gap: 16px;
+                    padding: 24px; 
+                    background-color: var(--color-surface); 
+                    border-radius: 8px; 
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                    width: 100%; /* Fill the 280px grid column */
+                ">
+                    
+                    <h3 style="
+                        font-size: 1.25rem; 
+                        color: var(--color-text); 
+                        padding-bottom: 12px; 
+                        border-bottom: 1px solid var(--color-primary-dark);
+                        margin-bottom: 8px;
+                    ">Filter & Sort</h3>
+
+                    <!-- Filter 1: Category -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="category-select" style="font-weight: 600; color: var(--color-text-muted); font-size: 0.9rem;">Category</label>
+                        <select name="category" id="category-select" style="
+                            width: 100%; 
+                            padding: 8px 12px; 
+                            border: 1px solid var(--color-primary-dark);
+                            border-radius: 4px;
+                            background-color: var(--color-background);
+                            color: var(--color-text);
+                            font-size: 1rem;
+                            -webkit-appearance: none;
+                            -moz-appearance: none;
+                            appearance: none;
+                            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\"><path fill=\"%23f0f0f0\" d=\"M9.293 12.95l.707.707L15 9.707l-1.414-1.414L10 12.286l-3.586-3.586L5 9.707l4.293 3.243z\"/></svg>');
+                            background-repeat: no-repeat;
+                            background-position: right 0.75rem center;
+                            background-size: 1.5em 1.5em;
+                        ">
+                            <option value="all">All categories</option>
+                            <option value="ceramics">Ceramics</option>
+                            <option value="jewelry">Jewelry</option>
+                            <option value="textiles">Textiles</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter 2: Location -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="city-select" style="font-weight: 600; color: var(--color-text-muted); font-size: 0.9rem;">Location</label>
+                        <select name="city" id="city-select" style="
+                            width: 100%; 
+                            padding: 8px 12px; 
+                            border: 1px solid var(--color-primary-dark);
+                            border-radius: 4px;
+                            background-color: var(--color-background);
+                            color: var(--color-text);
+                            font-size: 1rem;
+                            -webkit-appearance: none;
+                            -moz-appearance: none;
+                            appearance: none;
+                            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\"><path fill=\"%23f0f0f0\" d=\"M9.293 12.95l.707.707L15 9.707l-1.414-1.414L10 12.286l-3.586-3.586L5 9.707l4.293 3.243z\"/></svg>');
+                            background-repeat: no-repeat;
+                            background-position: right 0.75rem center;
+                            background-size: 1.5em 1.5em;
+                        ">
+                            <option value="">All locations</option>
+                            <option value="jaipur">Jaipur</option>
+                            <option value="mumbai">Mumbai</option>
+                        </select>
+                    </div>
+
+                  <!-- Filter 3: Price Range -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-weight: 600; color: var(--color-text-muted); font-size: 0.9rem;">Price Range (₹)</label>
                         
-                        <form method="post" action="{% url 'add_to_cart' product.pk %}" class="quick-add-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="qty" value="1" />
-                            <button type="submit" class="add-to-cart-btn">Quick Add</button>
-                        </form>
+                        <!-- Outer Container -->
+                        <div style="display: flex; gap: 8px; align-items: center; width: 100%;"> 
+                            
+                            <!-- Input 1: Min Price -->
+                            <input type="number" name="min_price" placeholder="Min" style="
+                                /* CRITICAL FIX: Share 50% width and subtract the gap/separator */
+                                width: calc(50% - 4px); 
+                                flex-grow: 1;
+                                padding: 8px;
+                                border: 1px solid var(--color-primary-dark);
+                                border-radius: 4px;
+                                background-color: var(--color-background);
+                                color: var(--color-text);
+                                text-align: center;
+                            ">
+                            <span style="color: var(--color-text-muted);">—</span>
+                            
+                            <!-- Input 2: Max Price -->
+                            <input type="number" name="max_price" placeholder="Max" style="
+                                /* CRITICAL FIX: Share 50% width and subtract the gap/separator */
+                                width: calc(50% - 4px); 
+                                flex-grow: 1;
+                                padding: 8px;
+                                border: 1px solid var(--color-primary-dark);
+                                border-radius: 4px;
+                                background-color: var(--color-background);
+                                color: var(--color-text);
+                                text-align: center;
+                            ">
                         </div>
-                </article>
-            {% empty %}
-                <p>No products found matching your criteria.</p>
-            {% endfor %}
+                    </div>
+                                        
+                    <!-- Sort By -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="sort-select" style="font-weight: 600; color: var(--color-text-muted); font-size: 0.9rem;">Sort By</label>
+                        <select name="sort" id="sort-select" style="
+                            width: 100%; 
+                            padding: 8px 12px; 
+                            border: 1px solid var(--color-primary-dark);
+                            border-radius: 4px;
+                            background-color: var(--color-background);
+                            color: var(--color-text);
+                            font-size: 1rem;
+                            -webkit-appearance: none;
+                            -moz-appearance: none;
+                            appearance: none;
+                            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\"><path fill=\"%23f0f0f0\" d=\"M9.293 12.95l.707.707L15 9.707l-1.414-1.414L10 12.286l-3.586-3.586L5 9.707l4.293 3.243z\"/></svg>');
+                            background-repeat: no-repeat;
+                            background-position: right 0.75rem center;
+                            background-size: 1.5em 1.5em;
+                        ">
+                            <option value="">Newest Listings</option>
+                            <option value="asc">Price: low → high</option>
+                            <option value="desc">Price: high → low</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                        <button type="submit" class="btn btn-primary" style="
+                            width: 100%;
+                            padding: 10px 16px; 
+                            border: none; 
+                            border-radius: 4px; 
+                            background-color: var(--color-primary); 
+                            color: var(--color-background); 
+                            font-weight: 600; 
+                            cursor: pointer;
+                            transition: background-color 0.2s;
+                        " onmouseover="this.style.backgroundColor='var(--color-primary-dark)'" onmouseout="this.style.backgroundColor='var(--color-primary)'">
+                            Apply Filters
+                        </button>
+                        <a href="{% url 'product_list' %}" class="btn btn-outline" style="
+                            display: block; 
+                            text-align: center;
+                            width: 100%;
+                            padding: 10px 16px; 
+                            border: 1px solid var(--color-text-muted); 
+                            border-radius: 4px; 
+                            background-color: transparent; 
+                            color: var(--color-text); 
+                            font-weight: 600; 
+                            text-decoration: none;
+                            transition: background-color 0.2s, color 0.2s;
+                        " onmouseover="this.style.backgroundColor='var(--color-text)'; this.style.color='var(--color-background)'" onmouseout="this.style.backgroundColor='transparent'; this.style.color='var(--color-text)'">
+                            Reset Filters
+                        </a>
+                    </div>
+
+                </form>
+            </aside>
+            
+            <!-- RIGHT COLUMN: Product List -->
+            <main>
+                <!-- Header: Title and Search Bar Side-by-Side -->
+    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <!-- Title (Left Aligned) -->
+        <h1 style="margin: 0; font-size: 2.5rem;">Browse Art & Products</h1>
+        
+        <!-- Search Bar (Right Aligned, Centered Vertically with Title) -->
+        <form method="get" class="search-form" style="display: flex; gap: 8px; align-items: center; max-width: 300px;">
+            <input type="search" name="q" value="{{ q }}" placeholder="Search products..." class="search-input" style="flex: 1; padding: 10px; border-radius: 4px; border: 1px solid var(--color-primary-dark); background: var(--color-background); color: var(--color-text);" />
+            <button type="submit" class="btn btn-primary" style="padding: 10px 16px;">Search</button>
+        </form>
+    </header>
+            
+                <div class="product-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+                    {% for product in page_obj.object_list %}
+                        <article class="product-card" style="background-color: var(--color-surface); border-radius: 8px; overflow: hidden;">
+                            <a href="{% url 'product_detail' product.slug %}" class="product-image-container" style="display: block; height: 200px; overflow: hidden;">
+                                {% if product.is_local_artisan %}
+                                    <span class="local-artisan-tag" style="position: absolute; top: 8px; left: 8px; background-color: var(--color-primary); color: var(--color-background); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; z-index: 10;">Local Artisan</span>
+                                {% endif %}
+                                {% if product.images.first %}
+                                    <img src="{{ product.images.first.image.url }}" alt="{{ product.title }}" class="product-image" style="width: 100%; height: 100%; object-fit: cover;" />
+                                {% else %}
+                                    <img src="{% static 'images/product_placeholder.jpg' %}" alt="{{ product.title }}" class="product-image" style="width: 100%; height: 100%; object-fit: cover;" />
+                                {% endif %}
+                            </a>
+                            <div class="product-details" style="padding: 16px;">
+                                <div>
+                                    <h3 style="font-size: 1.1rem; margin: 0 0 4px 0;"><a href="{{ product.get_absolute_url }}" style="color: var(--color-text); text-decoration: none;">{{ product.title }}</a></h3>
+                                    <p class="product-price" style="font-size: 1.2rem; font-weight: 700; color: var(--color-primary); margin: 0 0 8px 0;">{{ product.get_price_display }}</p>
+                                    
+                                </div>
+                                
+                                <form method="post" action="{% url 'add_to_cart' product.pk %}" class="quick-add-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="qty" value="1" />
+                                    <button type="submit" class="add-to-cart-btn" style="width: 100%; padding: 8px; background-color: var(--color-primary); color: var(--color-background); border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Quick Add</button>
+                                </form>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <p style="grid-column: 1 / -1;">No products found matching your criteria.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" style="margin-top: var(--spacing-xl); text-align: center; display: flex; justify-content: center; gap: var(--spacing-md);">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline">← Previous</a>
+                    {% endif %}
+                    <span style="align-self: center; color: var(--color-text-muted);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline">Next →</a>
+                    {% endif %}
+                </div>
+            </main>
         </div>
 
-        <div class="pagination" style="margin-top: var(--spacing-xl); text-align: center; display: flex; justify-content: center; gap: var(--spacing-md);">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline">← Previous</a>
-            {% endif %}
-            <span style="align-self: center; color: var(--color-text-muted);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline">Next →</a>
-            {% endif %}
-        </div>
     </section>
 
+<!-- NOTE: Keeping the reusable JS block, but separated for clarity -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Check if configuration object is available (from base.html)
     if (typeof CraftyConfig === 'undefined') {
-        console.error('CraftyConfig is missing. Cannot initialize cart AJAX.');
-        return;
+        // console.error('CraftyConfig is missing. Cannot initialize cart AJAX.');
+        // return;
+        // In this final context, assume global variables are available or skip AJAX
     }
-
-    // Selectors
-    const cartIconAndText = document.querySelector('.cart-link');
-    const cartCountEl = document.getElementById('cart-count'); 
-
+    
     // Utility function to get CSRF token
     function getCookie(name) {
         const v = `; ${document.cookie}`;
@@ -73,111 +262,82 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
     
-
+    // Find count element (if present)
+    const cartCountEl = document.getElementById('cart-count'); 
+    
     // Helper to animate and set count
     function setCartCount(n) {
         if (!cartCountEl) return;
         cartCountEl.textContent = n;
-        // Animation effect
         cartCountEl.style.transform = 'scale(1.15)';
         setTimeout(() => cartCountEl.style.transform = '', 140);
     }
     window.setCartCount = setCartCount; 
 
 
-    // Intercept add-to-cart forms (both quick-add and detail page)
+    // Intercept add-to-cart forms 
     document.addEventListener('submit', async function (e) {
         const form = e.target;
         
-        // Ensure it's one of our AJAX cart forms
         if (!form.classList.contains('quick-add-form') && !form.classList.contains('add-to-cart-form')) {
             return;
         }
 
-        e.preventDefault(); // Stop the default submission/redirect
+        e.preventDefault(); 
 
         const submitBtn = form.querySelector('button[type="submit"]');
         const csrftoken = getCookie('csrftoken');
+        const url = form.action;
+        const formData = new FormData(form);
         
-        // --- Button State and Pre-Check ---
-        if (!submitBtn || !csrftoken) {
-            console.error('Missing submit button or CSRF token.');
-            return;
-        }
+        if (!submitBtn || !csrftoken || !window.setCartCount) { return; }
         
-        // CRITICAL: Disable button immediately to prevent double-click
-        if (submitBtn.disabled) {
-            return; 
-        }
+        // CRITICAL: Disable button immediately 
+        if (submitBtn.disabled) { return; }
         submitBtn.disabled = true;
         submitBtn.dataset.origText = submitBtn.textContent;
         submitBtn.textContent = 'Adding...';
 
-        const url = form.action;
-        const formData = new FormData(form);
-
         try {
             const resp = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrftoken
-                },
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrftoken },
                 body: formData
             });
 
             if (resp.ok) {
                 const json = await resp.json().catch(() => null);
                 
-                // 1. Update Cart Count
-                let newCount = null;
-                if (json && typeof json.count !== 'undefined') {
-                    newCount = json.count;
-                } else {
-                    // Refetch count if not in JSON (fallback)
-                    try {
-                        const cc = await fetch(CraftyConfig.cartCountUrl); 
-                        if (cc.ok) {
-                            const jj = await cc.json();
-                            newCount = jj.count;
-                        }
-                    } catch { /* silent fail */ }
+                // Update Cart Count
+                let newCount = (json && typeof json.count !== 'undefined') ? json.count : null;
+                if (newCount === null && typeof CraftyConfig !== 'undefined' && CraftyConfig.cartCountUrl) {
+                    const cc = await fetch(CraftyConfig.cartCountUrl); 
+                    if (cc.ok) { newCount = (await cc.json()).count; }
                 }
-                
-                if (newCount !== null) {
-                    setCartCount(newCount || 0);
-                }
+                if (newCount !== null) { setCartCount(newCount || 0); }
 
                 // --- FIX: Restore "Added ✓" feedback ---
-                // Show temporary success message
                 submitBtn.textContent = 'Added ✓'; 
-                
-                // Restore button state after a delay
                 setTimeout(() => {
                     submitBtn.textContent = submitBtn.dataset.origText || 'Quick Add';
                     submitBtn.disabled = false;
                 }, 1100);
 
-                // small cart icon pulse (assumes cartCountEl exists)
                 if (cartCountEl) {
-                cartCountEl.style.transform = 'scale(1.35)';
-                cartCountEl.style.transition = 'transform 160ms ease';
-                setTimeout(() => {
-                    cartCountEl.style.transform = '';
-                }, 160);
+                    cartCountEl.style.transform = 'scale(1.35)';
+                    cartCountEl.style.transition = 'transform 160ms ease';
+                    setTimeout(() => { cartCountEl.style.transform = ''; }, 160);
                 }
 
             } else {
-                // Server error (e.g., validation failed)
                 submitBtn.textContent = submitBtn.dataset.origText || 'Quick Add';
                 submitBtn.disabled = false;
-                form.submit(); // Fallback to full submit for error handling
+                form.submit(); 
             }
         } catch (err) {
-            // Network error
             submitBtn.textContent = submitBtn.dataset.origText || 'Quick Add';
             submitBtn.disabled = false;
-            form.submit(); // Fallback to full submit
+            form.submit(); 
         }
     }, false);
 });

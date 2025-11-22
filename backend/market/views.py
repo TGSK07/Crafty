@@ -17,6 +17,8 @@ from django.views.generic import TemplateView
 
 from django.http import Http404
 from django.db.models.query import QuerySet
+from django.db.models import Q
+from decimal import Decimal, InvalidOperation
 
 from django.db import models
 from .models import Product, ProductImage, ArtistProfile, Category
@@ -139,14 +141,77 @@ class ShippingView(TemplateView):
 
 class ProductListView(View):
     def get(self, request):
-        q = request.GET.get("q", "")
-        products = Product.objects.filter(is_active=True).order_by("-created_at")
+        q = request.GET.get("q", "").strip()
+
+        # fetch the filtering fields
+        cat = request.GET.get("category", "").strip()
+        min_price = request.GET.get("min_price", "").strip()
+        max_price = request.GET.get("max_price", "").strip()
+        print(min_price, max_price)
+        city = request.GET.get("city", "").strip()
+        sort = request.GET.get("sort", "").strip()
+
+        products = Product.objects.filter(is_active=True).select_related("category", "seller").prefetch_related("images").order_by("-created_at")
         if q:
-            products = products.filter(title__icontains=q)
-        paginator = Paginator(products, 5)
+            products = products.filter(Q(title__icontains=q) | Q(description__icontains=q))
+
+        if cat and cat.lower() not in ("", "all"):
+            products = products.filter(category__slug=cat)
+
+        # price range safe parsing
+        try:
+            if min_price:
+                print("MIN PRICE:", min_price)
+                mp = Decimal(min_price)
+                print("MIN PRICE:", mp)
+                products = products.filter(price__gte=mp)
+                print("MIN PRICE:", mp)
+        except (InvalidOperation, ValueError):
+            pass
+        
+        
+        try:
+            if max_price:
+                print("MAX PRICE:", max_price)
+                xp = Decimal(max_price)
+                print("MAX PRICE:", xp)
+                products = products.filter(price__lte=xp)
+                print("MAX PRICE:", xp)
+        except (InvalidOperation, ValueError):
+            pass
+
+        if city:
+            products = products.filter(seller__artist_profile__city__iexact=city)
+        
+        if sort=="asc":
+            products = products.order_by("price", "-created_at")
+        elif sort=="desc":
+            products = products.order_by("-price", "-created_at")
+        else:
+            pass
+
+        paginator = Paginator(products, 10)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
-        return render(request, "market/product_list.html", {"page_obj":page_obj, "q":q})
+        
+        cats = Category.objects.all().order_by("name")
+        cities = (Product.objects.values_list("seller__artist_profile__city", flat=True)
+                  .distinct()
+                  .exclude(seller__artist_profile__city__isnull=True)
+                  .exclude(seller__artist_profile__city__exact="")
+                  .order_by("seller__artist_profile__city")
+                )
+        cities = set(city.title() for city in cities)
+        active_filters = {
+            "q": q,
+            "category": cat,
+            "min_price": min_price,
+            "max_price": max_price,
+            "city": city,
+            "sort": sort,
+        }
+        
+        return render(request, "market/product_list.html", {"page_obj":page_obj, "q":q, "categories": cats, "cities": cities, "active_filters": active_filters})
     
 
 class ProductDetailView(View):
