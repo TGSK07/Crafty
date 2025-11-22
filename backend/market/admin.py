@@ -7,6 +7,7 @@ from .models import ArtistProfile, Category, Product, ProductImage
 @admin.register(ArtistProfile)
 class ArtistProfileAdmin(admin.ModelAdmin):
     list_display = ("display_name", "user", "city", "contact_number")
+    search_fields = ("display_name", "user__username", "city")
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -19,5 +20,4 @@ class ProductImageInline(admin.TabularInline):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ("title", "seller", "price", "is_active", "created_at", "updated_at")
-    prepopulated_fields = {"slug":("title",)}
     inlines = [ProductImageInline]
