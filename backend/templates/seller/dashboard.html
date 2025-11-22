@@ -33,9 +33,16 @@
             <section class="dashboard-section actions-area">
                 <h2>Quick Actions 🚀</h2>
                 <ul class="dashboard-links">
-                    <li><a href="{% url 'artist_profile_manage' %}" class="btn btn-primary btn-icon">
-                        ➕ Your Artist Account
-                    </a></li>
+                    <li>{% if user.artist_profile %}
+                            <a href="{% url 'artist_profile_detail' user.artist_profile.slug %}" class="btn btn-primary btn-icon">
+                            🎨 View Your Artist Profile
+                            </a>
+                        {% else %}
+                            <a href="{% url 'artist_profile_manage' %}" class="btn btn-primary btn-icon">
+                            ➕ Create Your Artist Profile
+                            </a>
+                        {% endif %}
+                    </li>
                     <li><a href="{% url 'seller_products' %}" class="btn btn-outline btn-icon">
                         📦 View/Manage Products
                     </a></li>
