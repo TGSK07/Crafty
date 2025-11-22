@@ -14,7 +14,7 @@
         <div class="product-grid">
             {% for product in page_obj.object_list %}
                 <article class="product-card">
-                    <a href="{{ product.get_absolute_url }}" class="product-image-container">
+                    <a href="{% url 'product_detail' product.slug %}" class="product-image-container">
                         {% if product.is_local_artisan %}
                             <span class="local-artisan-tag">Local Artisan</span>
                         {% endif %}
