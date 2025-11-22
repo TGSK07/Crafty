@@ -4,7 +4,9 @@ from django.views import View
 from .forms import SignUpForm, LoginForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import User
-
+from .forms import UserProfileForm
+from django.contrib import messages
+from django.urls import reverse
 
 
 
@@ -55,3 +57,21 @@ class ProfileView(LoginRequiredMixin, View):
     def get(self, request):
         return render(request, self.template_name)
     
+class UserProfileEditForm(LoginRequiredMixin, View):
+    template_name = "auth/edit_profile.html"
+
+    def get(self, request):
+        user = request.user
+        form = UserProfileForm(instance=user, current_user=user)
+        return render(request, self.template_name, {"form": form, "user_obj": user})
+
+    def post(self, request):
+        user = request.user
+        form = UserProfileForm(request.POST, instance=user, current_user=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated successfully.")
+            return redirect(reverse("profile"))
+        else:
+            messages.error(request, "Please fix the errors below.")
+        return render(request, self.template_name, {"form": form, "user_obj": user})
