@@ -23,14 +23,14 @@
     <section class="container" style="margin-top: var(--spacing-xl);">
         <h2>Explore Categories</h2>
         <div class="category-grid">
-            <a href="{% url 'product_list' %}?category=home_decor" class="category-item">
+            <a href="{% url 'product_list' %}?category=home-decor" class="category-item">
                 <img src="{% static 'images/product_placeholder.jpg' %}" alt="Handcrafted Home Decor" class="category-item-image">
                 <span class="handmade-tag">Handmade</span>
                 <div class="category-info">
                     <h3>Handcrafted Home Decor</h3>
                 </div>
             </a>
-            <a href="{% url 'product_list' %}?category=paintings_art" class="category-item">
+            <a href="{% url 'product_list' %}?category=paintings" class="category-item">
                 <img src="{% static 'images/product_placeholder.jpg' %}" alt="Paintings & Art" class="category-item-image">
                 <span class="handmade-tag">Handmade</span>
                 <div class="category-info">
@@ -63,6 +63,13 @@
                 <span class="handmade-tag">Handmade</span>
                 <div class="category-info">
                     <h3>Clay & Ceramics</h3>
+                </div>
+            </a>
+            <a href="{% url 'product_list' %}?category=handloom" class="category-item">
+                <img src="{% static 'images/product_placeholder.jpg' %}" alt="Clay & Ceramics" class="category-item-image">
+                <span class="handmade-tag">Handmade</span>
+                <div class="category-info">
+                    <h3>HandLoom</h3>
                 </div>
             </a>
         </div>
